@@ -55,21 +55,21 @@ Created by **Toppzi**
 
 ```bash
 # Download the script
-curl -O https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/game-launcher-installer.sh
+curl -O https://raw.githubusercontent.com/toppzi/gamelauncher/main/gaminstaller.sh
 
 # Make it executable
-chmod +x game-launcher-installer.sh
+chmod +x gaminstaller.sh
 
 # Run it
-./game-launcher-installer.sh
+./gaminstaller.sh
 ```
 
 ### Or with wget
 
 ```bash
-wget https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/game-launcher-installer.sh
-chmod +x game-launcher-installer.sh
-./game-launcher-installer.sh
+wget https://raw.githubusercontent.com/toppzi/gamelauncher/main/gaminstaller.sh
+chmod +x gaminstaller.sh
+./gaminstaller.sh
 ```
 
 ## Usage
