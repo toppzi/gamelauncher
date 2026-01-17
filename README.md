@@ -64,10 +64,12 @@ Created by **Toppzi**
 ```bash
 # Download the script
 curl -O https://raw.githubusercontent.com/toppzi/gamelauncher/main/gameinstaller.sh
-
+```
+```bash
 # Make it executable
 chmod +x gameinstaller.sh
-
+```
+```bash
 # Run it
 ./gameinstaller.sh
 ```
