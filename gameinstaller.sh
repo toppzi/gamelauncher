@@ -38,10 +38,6 @@ LAUNCHER_KEYS=(steam lutris heroic bottles protonplus gamehub minigalaxy itch)
 DRIVER_KEYS=(nvidia nvidia_32bit mesa vulkan_amd vulkan_intel amd_32bit intel_32bit)
 TOOL_KEYS=(gamemode mangohud goverlay protonge wine winetricks dxvk vkbasalt corectrl)
 
-# Drive mount configurations
-declare -a AVAILABLE_DRIVES
-declare -a MOUNT_CONFIGS
-
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
@@ -393,7 +389,7 @@ tools_menu() {
         echo -e "  9) $(show_checkbox "${TOOLS[corectrl]}")  CoreCtrl       - GPU control panel"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
+        echo -e "  ${GREEN}c) Continue to Review${NC}"
         echo -e "  ${YELLOW}b) Back to Drivers${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
@@ -424,298 +420,6 @@ tools_menu() {
             q|Q) exit 0 ;;
         esac
     done
-}
-
-# ============================================================================
-# DRIVE MOUNTING FUNCTIONS
-# ============================================================================
-
-detect_drives() {
-    AVAILABLE_DRIVES=()
-    
-    # Get list of block devices that are not mounted and not the root device
-    local root_device
-    root_device=$(findmnt -n -o SOURCE / 2>/dev/null | sed 's/[0-9]*$//' | xargs basename 2>/dev/null) || true
-    
-    while IFS= read -r line; do
-        local name size type mountpoint fstype
-        name=$(echo "$line" | awk '{print $1}')
-        size=$(echo "$line" | awk '{print $2}')
-        type=$(echo "$line" | awk '{print $3}')
-        mountpoint=$(echo "$line" | awk '{print $4}')
-        fstype=$(echo "$line" | awk '{print $5}')
-        
-        # Skip if it's a loop device, rom, or already mounted
-        [[ "$type" == "loop" || "$type" == "rom" ]] && continue
-        [[ -n "$mountpoint" && "$mountpoint" != "" ]] && continue
-        
-        # Skip if no filesystem
-        [[ -z "$fstype" || "$fstype" == "" ]] && continue
-        
-        # Skip root device partitions that are swap
-        [[ "$fstype" == "swap" ]] && continue
-        
-        # Add to available drives
-        AVAILABLE_DRIVES+=("$name|$size|$fstype")
-    done < <(lsblk -rno NAME,SIZE,TYPE,MOUNTPOINT,FSTYPE 2>/dev/null || true)
-}
-
-get_drive_uuid() {
-    local device=$1
-    blkid -s UUID -o value "/dev/$device" 2>/dev/null || echo ""
-}
-
-get_drive_label() {
-    local device=$1
-    blkid -s LABEL -o value "/dev/$device" 2>/dev/null || echo ""
-}
-
-configure_mount() {
-    local device=$1
-    local size=$2
-    local fstype=$3
-    local choice mount_point mount_name
-    
-    print_banner
-    
-    echo -e "${CYAN}══════════════════════════════════════════${NC}"
-    echo -e "${CYAN}         CONFIGURE DRIVE MOUNT            ${NC}"
-    echo -e "${CYAN}══════════════════════════════════════════${NC}"
-    echo ""
-    echo -e "  Device:     ${GREEN}/dev/$device${NC}"
-    echo -e "  Size:       ${GREEN}$size${NC}"
-    echo -e "  Filesystem: ${GREEN}$fstype${NC}"
-    
-    local uuid label
-    uuid=$(get_drive_uuid "$device")
-    label=$(get_drive_label "$device")
-    [[ -n "$uuid" ]] && echo -e "  UUID:       ${GREEN}$uuid${NC}"
-    [[ -n "$label" ]] && echo -e "  Label:      ${GREEN}$label${NC}"
-    echo ""
-    
-    # Get mount point
-    echo -e "  ${CYAN}Where do you want to mount this drive?${NC}"
-    echo ""
-    echo "  Examples: /mnt/games, /mnt/storage, /home/$USER/Games"
-    echo ""
-    read -rp "  Mount point: " mount_point
-    
-    # Validate mount point
-    if [[ -z "$mount_point" ]]; then
-        print_warning "Mount point cannot be empty."
-        press_enter
-        return 1
-    fi
-    
-    # Ensure it starts with /
-    if [[ ! "$mount_point" =~ ^/ ]]; then
-        mount_point="/$mount_point"
-    fi
-    
-    echo ""
-    
-    # Get friendly name (optional)
-    echo -e "  ${CYAN}Give this mount a friendly name (optional):${NC}"
-    echo ""
-    echo "  Examples: Games, Storage, Media"
-    echo ""
-    read -rp "  Name (leave empty to skip): " mount_name
-    
-    [[ -z "$mount_name" ]] && mount_name="$device"
-    
-    # Add to mount configs
-    MOUNT_CONFIGS+=("$device|$mount_point|$mount_name|$fstype|$uuid")
-    
-    print_success "Mount configured: /dev/$device -> $mount_point ($mount_name)"
-    press_enter
-    return 0
-}
-
-remove_mount_config() {
-    local index=$1
-    local new_configs=()
-    
-    for i in "${!MOUNT_CONFIGS[@]}"; do
-        if [[ $i -ne $index ]]; then
-            new_configs+=("${MOUNT_CONFIGS[$i]}")
-        fi
-    done
-    
-    MOUNT_CONFIGS=("${new_configs[@]}")
-}
-
-drives_menu() {
-    local choice
-    
-    while true; do
-        print_banner
-        
-        echo -e "${CYAN}══════════════════════════════════════════${NC}"
-        echo -e "${CYAN}          DRIVE MOUNTING SETUP            ${NC}"
-        echo -e "${CYAN}══════════════════════════════════════════${NC}"
-        echo ""
-        
-        # Detect available drives
-        detect_drives
-        
-        if [[ ${#AVAILABLE_DRIVES[@]} -eq 0 ]]; then
-            echo -e "  ${YELLOW}No unmounted drives detected.${NC}"
-            echo ""
-            echo "  All drives appear to be mounted or no additional"
-            echo "  drives are available."
-        else
-            echo -e "  ${GREEN}Available unmounted drives:${NC}"
-            echo ""
-            
-            local i=1
-            for drive_info in "${AVAILABLE_DRIVES[@]}"; do
-                local device size fstype
-                device=$(echo "$drive_info" | cut -d'|' -f1)
-                size=$(echo "$drive_info" | cut -d'|' -f2)
-                fstype=$(echo "$drive_info" | cut -d'|' -f3)
-                
-                printf "  %d) /dev/%-10s %8s  (%s)\n" "$i" "$device" "$size" "$fstype"
-                ((i++))
-            done
-        fi
-        
-        echo ""
-        
-        # Show configured mounts
-        if [[ ${#MOUNT_CONFIGS[@]} -gt 0 ]]; then
-            echo -e "  ${GREEN}Configured mounts:${NC}"
-            echo ""
-            
-            local j=1
-            for config in "${MOUNT_CONFIGS[@]}"; do
-                local device mount_point mount_name
-                device=$(echo "$config" | cut -d'|' -f1)
-                mount_point=$(echo "$config" | cut -d'|' -f2)
-                mount_name=$(echo "$config" | cut -d'|' -f3)
-                
-                echo -e "    ${GREEN}[$j]${NC} /dev/$device -> $mount_point ($mount_name)"
-                ((j++))
-            done
-            echo ""
-            echo -e "  ${YELLOW}r) Remove a configured mount${NC}"
-        fi
-        
-        echo ""
-        echo -e "  ${CYAN}Enter drive number (1-${#AVAILABLE_DRIVES[@]}) to configure${NC}"
-        echo -e "  ${GREEN}c) Continue to Review${NC}"
-        echo -e "  ${YELLOW}b) Back to Tools${NC}"
-        echo -e "  ${RED}q) Quit${NC}"
-        echo ""
-        read -rp "  Enter choice: " choice
-        
-        case "$choice" in
-            [1-9]|[1-9][0-9])
-                local idx=$((choice - 1))
-                if [[ $idx -lt ${#AVAILABLE_DRIVES[@]} ]]; then
-                    local drive_info="${AVAILABLE_DRIVES[$idx]}"
-                    local device size fstype
-                    device=$(echo "$drive_info" | cut -d'|' -f1)
-                    size=$(echo "$drive_info" | cut -d'|' -f2)
-                    fstype=$(echo "$drive_info" | cut -d'|' -f3)
-                    
-                    configure_mount "$device" "$size" "$fstype" || true
-                else
-                    print_warning "Invalid selection."
-                    press_enter
-                fi
-                ;;
-            r|R)
-                if [[ ${#MOUNT_CONFIGS[@]} -gt 0 ]]; then
-                    echo ""
-                    read -rp "  Enter mount number to remove: " remove_idx
-                    if [[ "$remove_idx" =~ ^[0-9]+$ ]] && [[ $remove_idx -ge 1 ]] && [[ $remove_idx -le ${#MOUNT_CONFIGS[@]} ]]; then
-                        remove_mount_config $((remove_idx - 1))
-                        print_success "Mount configuration removed."
-                        press_enter
-                    else
-                        print_warning "Invalid selection."
-                        press_enter
-                    fi
-                fi
-                ;;
-            c|C) return 0 ;;
-            b|B) return 1 ;;
-            q|Q) exit 0 ;;
-        esac
-    done
-}
-
-apply_mount_configs() {
-    if [[ ${#MOUNT_CONFIGS[@]} -eq 0 ]]; then
-        return 0
-    fi
-    
-    print_info "Configuring drive mounts..."
-    echo ""
-    
-    # Backup fstab
-    sudo cp /etc/fstab /etc/fstab.backup.$(date +%Y%m%d%H%M%S) || true
-    print_success "Backed up /etc/fstab"
-    
-    for config in "${MOUNT_CONFIGS[@]}"; do
-        local device mount_point mount_name fstype uuid
-        device=$(echo "$config" | cut -d'|' -f1)
-        mount_point=$(echo "$config" | cut -d'|' -f2)
-        mount_name=$(echo "$config" | cut -d'|' -f3)
-        fstype=$(echo "$config" | cut -d'|' -f4)
-        uuid=$(echo "$config" | cut -d'|' -f5)
-        
-        # Create mount point
-        if [[ ! -d "$mount_point" ]]; then
-            sudo mkdir -p "$mount_point" || true
-            print_success "Created mount point: $mount_point"
-        fi
-        
-        # Set ownership to current user
-        sudo chown "$USER:$USER" "$mount_point" || true
-        
-        # Determine mount options based on filesystem
-        local mount_opts="defaults"
-        case "$fstype" in
-            ntfs|ntfs-3g)
-                fstype="ntfs-3g"
-                mount_opts="defaults,uid=$(id -u),gid=$(id -g),dmask=022,fmask=133"
-                ;;
-            exfat)
-                mount_opts="defaults,uid=$(id -u),gid=$(id -g)"
-                ;;
-            ext4|ext3|ext2|xfs|btrfs)
-                mount_opts="defaults,nofail"
-                ;;
-        esac
-        
-        # Add to fstab using UUID if available
-        local fstab_entry
-        if [[ -n "$uuid" ]]; then
-            fstab_entry="UUID=$uuid  $mount_point  $fstype  $mount_opts  0  2"
-        else
-            fstab_entry="/dev/$device  $mount_point  $fstype  $mount_opts  0  2"
-        fi
-        
-        # Check if entry already exists
-        if grep -q "$mount_point" /etc/fstab 2>/dev/null; then
-            print_warning "Mount point $mount_point already in fstab, skipping."
-        else
-            echo "$fstab_entry" | sudo tee -a /etc/fstab > /dev/null
-            print_success "Added to fstab: $mount_point ($mount_name)"
-        fi
-        
-        # Mount the drive now
-        sudo mount "$mount_point" 2>/dev/null || sudo mount "/dev/$device" "$mount_point" 2>/dev/null || true
-        
-        if mountpoint -q "$mount_point" 2>/dev/null; then
-            print_success "Mounted: /dev/$device -> $mount_point"
-        else
-            print_warning "Could not mount $mount_point now. It will mount on next reboot."
-        fi
-    done
-    
-    echo ""
 }
 
 review_menu() {
@@ -759,26 +463,11 @@ review_menu() {
     has_any_selected TOOLS || echo "    (none selected)"
     
     echo ""
-    echo -e "  ${GREEN}Drive Mounts:${NC}"
-    if [[ ${#MOUNT_CONFIGS[@]} -gt 0 ]]; then
-        for config in "${MOUNT_CONFIGS[@]}"; do
-            local device mount_point mount_name
-            device=$(echo "$config" | cut -d'|' -f1)
-            mount_point=$(echo "$config" | cut -d'|' -f2)
-            mount_name=$(echo "$config" | cut -d'|' -f3)
-            echo "    - /dev/$device -> $mount_point ($mount_name)"
-            has_selection=true
-        done
-    else
-        echo "    (none configured)"
-    fi
-    
-    echo ""
     echo -e "${CYAN}──────────────────────────────────────────${NC}"
     echo ""
     
     if [[ "$has_selection" == false ]]; then
-        print_warning "Nothing selected to install or configure!"
+        print_warning "Nothing selected to install!"
         echo ""
         echo -e "  ${YELLOW}b) Back to selection${NC}"
         echo -e "  ${RED}q) Quit${NC}"
@@ -792,7 +481,7 @@ review_menu() {
     fi
     
     echo -e "  ${GREEN}i) Start Installation${NC}"
-    echo -e "  ${YELLOW}b) Back to Drive Mounting${NC}"
+    echo -e "  ${YELLOW}b) Back to Tools${NC}"
     echo -e "  ${RED}q) Quit${NC}"
     echo ""
     read -rp "  Enter choice: " choice
@@ -1117,9 +806,6 @@ run_installation() {
             ;;
     esac
     
-    # Apply drive mount configurations
-    apply_mount_configs
-    
     echo ""
     echo -e "${GREEN}══════════════════════════════════════════${NC}"
     echo -e "${GREEN}        INSTALLATION COMPLETE!            ${NC}"
@@ -1194,16 +880,9 @@ main() {
                 ;;
             tools)
                 if tools_menu; then
-                    current_menu="drives"
-                else
-                    current_menu="driver"
-                fi
-                ;;
-            drives)
-                if drives_menu; then
                     current_menu="review"
                 else
-                    current_menu="tools"
+                    current_menu="driver"
                 fi
                 ;;
             review)
@@ -1211,7 +890,7 @@ main() {
                     run_installation
                     exit 0
                 else
-                    current_menu="drives"
+                    current_menu="tools"
                 fi
                 ;;
         esac
