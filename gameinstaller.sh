@@ -58,7 +58,7 @@ print_banner() {
     echo "  ║   ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗                      ║"
     echo "  ║   ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝                      ║"
     echo "  ║                                                               ║"
-    echo "  ║        GAME LAUNCHER INSTALLER v0.2                           ║"
+    echo "  ║        GAME LAUNCHER INSTALLER v0.2.1                         ║"
     echo "  ║                                                               ║"
     echo "  ║                    Created by Toppzi                          ║"
     echo "  ║                                                               ║"
@@ -104,7 +104,7 @@ check_dependencies() {
     
     local missing=()
     
-    for cmd in curl wget; do
+    for cmd in curl wget git; do
         if ! command -v "$cmd" &> /dev/null; then
             missing+=("$cmd")
         fi
@@ -840,7 +840,7 @@ install_arch() {
     enable_multilib_arch
     
     # Full system upgrade to avoid partial upgrades
-    sudo pacman -Syu --noconfirm || true
+    sudo pacman -Syu --noconfirm base-devel ttf-liberation noto-fonts || true
     
     local packages=()
     
@@ -866,7 +866,6 @@ install_arch() {
     [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine wine-mono wine-gecko)
     [[ "${TOOLS[winetricks]}" == "1" ]] && packages+=(winetricks)
     [[ "${TOOLS[dxvk]}" == "1" ]] && packages+=(dxvk)
-    [[ "${TOOLS[vkbasalt]}" == "1" ]] && packages+=(vkbasalt lib32-vkbasalt)
     [[ "${TOOLS[corectrl]}" == "1" ]] && packages+=(corectrl)
     [[ "${TOOLS[gamescope]}" == "1" ]] && packages+=(gamescope)
     [[ "${TOOLS[discord]}" == "1" ]] && packages+=(discord)
@@ -884,6 +883,7 @@ install_arch() {
     [[ "${LAUNCHERS[minigalaxy]}" == "1" ]] && aur_packages+=(minigalaxy)
     [[ "${LAUNCHERS[itch]}" == "1" ]] && aur_packages+=(itch)
     [[ "${TOOLS[protonge]}" == "1" ]] && aur_packages+=(proton-ge-custom-bin)
+    [[ "${TOOLS[vkbasalt]}" == "1" ]] && aur_packages+=(vkbasalt lib32-vkbasalt)
     
     if [[ ${#aur_packages[@]} -gt 0 ]]; then
         if command -v yay &> /dev/null; then
@@ -891,9 +891,20 @@ install_arch() {
         elif command -v paru &> /dev/null; then
             paru -S --needed --noconfirm "${aur_packages[@]}" || true
         else
-            print_warning "AUR helper (yay/paru) not found. Skipping AUR packages:"
-            print_warning "${aur_packages[*]}"
-            print_info "Install yay or paru to install these packages."
+            print_warning "AUR helper not found. Installing yay-bin..."
+            
+            local temp_dir
+            temp_dir=$(mktemp -d)
+            git clone https://aur.archlinux.org/yay-bin.git "$temp_dir/yay-bin"
+            
+            pushd "$temp_dir/yay-bin" > /dev/null || return
+            makepkg -si --noconfirm
+            popd > /dev/null || return
+            rm -rf "$temp_dir"
+            
+            if command -v yay &> /dev/null; then
+                yay -S --needed --noconfirm "${aur_packages[@]}" || true
+            fi
         fi
     fi
 }
