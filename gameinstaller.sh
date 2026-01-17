@@ -899,32 +899,44 @@ install_debian() {
     # Launchers - prefer Flatpak for better compatibility on Debian
     # Steam/Lutris/GameHub are often not in Debian repos or outdated
     if [[ "${LAUNCHERS[steam]}" == "1" ]]; then
-        # Check if Steam is available
-        if apt-cache show steam &>/dev/null 2>&1; then
+        # Check if Steam is actually installable (not just referenced)
+        if apt-cache policy steam 2>/dev/null | grep -q "Candidate:" && \
+           ! apt-cache policy steam 2>/dev/null | grep -q "Candidate: (none)"; then
             packages+=(steam)
         else
-            # Prompt to add non-free repository on Debian
+            # Prompt to add non-free repository on Debian stable (bookworm)
             if [[ "$DISTRO" == "debian" ]]; then
-                print_warning "Steam requires non-free repository on Debian."
-                print_info "Add this line to /etc/apt/sources.list:"
-                echo ""
-                echo "  deb http://deb.debian.org/debian bookworm main contrib non-free"
-                echo ""
-                read -p "Would you like to add this repository now? [y/N]: " add_repo
-                if [[ "$add_repo" =~ ^[Yy]$ ]]; then
-                    echo "deb http://deb.debian.org/debian bookworm main contrib non-free" | sudo tee -a /etc/apt/sources.list
-                    sudo apt-get update
-                    if apt-cache show steam &>/dev/null 2>&1; then
-                        packages+=(steam)
+                # Check Debian version
+                local debian_version=$(cat /etc/debian_version 2>/dev/null)
+                if [[ "$debian_version" == "12"* ]] || [[ "$debian_version" == "bookworm"* ]]; then
+                    print_warning "Steam requires non-free repository on Debian."
+                    print_info "Add this line to /etc/apt/sources.list:"
+                    echo ""
+                    echo "  deb http://deb.debian.org/debian bookworm main contrib non-free"
+                    echo ""
+                    read -p "Would you like to add this repository now? [y/N]: " add_repo
+                    if [[ "$add_repo" =~ ^[Yy]$ ]]; then
+                        echo "deb http://deb.debian.org/debian bookworm main contrib non-free" | sudo tee -a /etc/apt/sources.list
+                        sudo apt-get update
+                        if apt-cache policy steam 2>/dev/null | grep -q "Candidate:" && \
+                           ! apt-cache policy steam 2>/dev/null | grep -q "Candidate: (none)"; then
+                            packages+=(steam)
+                        else
+                            print_warning "Steam still not found, using Flatpak instead..."
+                            flatpak_launchers+=(com.valvesoftware.Steam)
+                        fi
                     else
-                        print_warning "Steam still not found, using Flatpak instead..."
+                        print_info "Using Flatpak for Steam instead..."
                         flatpak_launchers+=(com.valvesoftware.Steam)
                     fi
                 else
-                    print_info "Using Flatpak for Steam instead..."
+                    # Debian Testing/Sid - use Flatpak (more reliable)
+                    print_info "Debian Testing/Sid detected - using Flatpak for Steam..."
                     flatpak_launchers+=(com.valvesoftware.Steam)
                 fi
             else
+                # Ubuntu/other - use Flatpak
+                print_info "Steam not in apt, using Flatpak..."
                 flatpak_launchers+=(com.valvesoftware.Steam)
             fi
         fi
