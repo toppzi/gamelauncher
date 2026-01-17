@@ -36,7 +36,7 @@ declare -A TOOLS
 # Ordered keys for consistent menu display
 LAUNCHER_KEYS=(steam lutris heroic bottles protonplus gamehub minigalaxy itch)
 DRIVER_KEYS=(nvidia nvidia_32bit mesa vulkan_amd vulkan_intel amd_32bit intel_32bit)
-TOOL_KEYS=(gamemode mangohud goverlay protonge wine winetricks dxvk vkbasalt corectrl)
+TOOL_KEYS=(gamemode mangohud goverlay protonge wine winetricks dxvk vkbasalt corectrl gamescope discord obs flatseal)
 
 # Drive mount configurations
 declare -a AVAILABLE_DRIVES
@@ -391,6 +391,10 @@ tools_menu() {
         echo -e "  7) $(show_checkbox "${TOOLS[dxvk]}")  DXVK           - DirectX to Vulkan"
         echo -e "  8) $(show_checkbox "${TOOLS[vkbasalt]}")  vkBasalt       - Vulkan post-processing"
         echo -e "  9) $(show_checkbox "${TOOLS[corectrl]}")  CoreCtrl       - GPU control panel"
+        echo -e "  10) $(show_checkbox "${TOOLS[gamescope]}")  Gamescope      - Micro-compositor"
+        echo -e "  11) $(show_checkbox "${TOOLS[discord]}")  Discord        - Voice & Text Chat"
+        echo -e "  12) $(show_checkbox "${TOOLS[obs]}")  OBS Studio     - Streaming/Recording"
+        echo -e "  13) $(show_checkbox "${TOOLS[flatseal]}")  Flatseal       - Flatpak Permissions"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
         echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
@@ -409,6 +413,10 @@ tools_menu() {
             7) toggle_selection TOOLS dxvk ;;
             8) toggle_selection TOOLS vkbasalt ;;
             9) toggle_selection TOOLS corectrl ;;
+            10) toggle_selection TOOLS gamescope ;;
+            11) toggle_selection TOOLS discord ;;
+            12) toggle_selection TOOLS obs ;;
+            13) toggle_selection TOOLS flatseal ;;
             a|A)
                 for key in "${TOOL_KEYS[@]}"; do
                     TOOLS[$key]="1"
@@ -857,9 +865,13 @@ install_arch() {
     [[ "${TOOLS[goverlay]}" == "1" ]] && packages+=(goverlay)
     [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine wine-mono wine-gecko)
     [[ "${TOOLS[winetricks]}" == "1" ]] && packages+=(winetricks)
-    [[ "${TOOLS[dxvk]}" == "1" ]] && packages+=(dxvk-bin)
-    [[ "${TOOLS[vkbasalt]}" == "1" ]] && packages+=(vkbasalt)
+    [[ "${TOOLS[dxvk]}" == "1" ]] && packages+=(dxvk)
+    [[ "${TOOLS[vkbasalt]}" == "1" ]] && packages+=(vkbasalt lib32-vkbasalt)
     [[ "${TOOLS[corectrl]}" == "1" ]] && packages+=(corectrl)
+    [[ "${TOOLS[gamescope]}" == "1" ]] && packages+=(gamescope)
+    [[ "${TOOLS[discord]}" == "1" ]] && packages+=(discord)
+    [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
+    [[ "${TOOLS[flatseal]}" == "1" ]] && packages+=(flatseal)
     
     if [[ ${#packages[@]} -gt 0 ]]; then
         sudo pacman -S --needed --noconfirm "${packages[@]}" || true
@@ -894,64 +906,17 @@ install_debian() {
     sudo apt-get update || true
     
     local packages=()
-    local flatpak_launchers=()
     
-    # Launchers - prefer Flatpak for better compatibility on Debian
-    # Steam/Lutris/GameHub are often not in Debian repos or outdated
+    # Launchers - handle Debian vs Ubuntu differences
     if [[ "${LAUNCHERS[steam]}" == "1" ]]; then
-        # Check if Steam is actually installable (not just referenced)
-        if apt-cache policy steam 2>/dev/null | grep -q "Candidate:" && \
-           ! apt-cache policy steam 2>/dev/null | grep -q "Candidate: (none)"; then
+        if [[ "$DISTRO" == "debian" ]]; then
+            packages+=(steam-installer)
+        else
             packages+=(steam)
-        else
-            # Prompt to add non-free repository on Debian stable (bookworm)
-            if [[ "$DISTRO" == "debian" ]]; then
-                # Check Debian version
-                local debian_version=$(cat /etc/debian_version 2>/dev/null)
-                if [[ "$debian_version" == "12"* ]] || [[ "$debian_version" == "bookworm"* ]]; then
-                    print_warning "Steam requires non-free repository on Debian."
-                    print_info "Add this line to /etc/apt/sources.list:"
-                    echo ""
-                    echo "  deb http://deb.debian.org/debian bookworm main contrib non-free"
-                    echo ""
-                    read -p "Would you like to add this repository now? [y/N]: " add_repo
-                    if [[ "$add_repo" =~ ^[Yy]$ ]]; then
-                        echo "deb http://deb.debian.org/debian bookworm main contrib non-free" | sudo tee -a /etc/apt/sources.list
-                        sudo apt-get update
-                        if apt-cache policy steam 2>/dev/null | grep -q "Candidate:" && \
-                           ! apt-cache policy steam 2>/dev/null | grep -q "Candidate: (none)"; then
-                            packages+=(steam)
-                        else
-                            print_warning "Steam still not found, using Flatpak instead..."
-                            flatpak_launchers+=(com.valvesoftware.Steam)
-                        fi
-                    else
-                        print_info "Using Flatpak for Steam instead..."
-                        flatpak_launchers+=(com.valvesoftware.Steam)
-                    fi
-                else
-                    # Debian Testing/Sid - use Flatpak (more reliable)
-                    print_info "Debian Testing/Sid detected - using Flatpak for Steam..."
-                    flatpak_launchers+=(com.valvesoftware.Steam)
-                fi
-            else
-                # Ubuntu/other - use Flatpak
-                print_info "Steam not in apt, using Flatpak..."
-                flatpak_launchers+=(com.valvesoftware.Steam)
-            fi
         fi
     fi
-    if [[ "${LAUNCHERS[lutris]}" == "1" ]]; then
-        if apt-cache show lutris &>/dev/null 2>&1; then
-            packages+=(lutris)
-        else
-            flatpak_launchers+=(net.lutris.Lutris)
-        fi
-    fi
-    if [[ "${LAUNCHERS[gamehub]}" == "1" ]]; then
-        # GameHub rarely in repos, use Flatpak
-        flatpak_launchers+=(com.github.tkashkin.gamehub)
-    fi
+    [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
+    [[ "${LAUNCHERS[gamehub]}" == "1" ]] && packages+=(gamehub)
     
     # Drivers
     if [[ "${DRIVERS[nvidia]}" == "1" ]]; then
@@ -970,13 +935,15 @@ install_debian() {
     [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine wine64 wine32)
     [[ "${TOOLS[winetricks]}" == "1" ]] && packages+=(winetricks)
     [[ "${TOOLS[dxvk]}" == "1" ]] && packages+=(dxvk)
+    [[ "${TOOLS[gamescope]}" == "1" ]] && packages+=(gamescope)
+    [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
     
     if [[ ${#packages[@]} -gt 0 ]]; then
         sudo apt-get install -y "${packages[@]}" || true
     fi
     
-    # Flatpak packages - combine with launchers that need Flatpak
-    local flatpak_packages=("${flatpak_launchers[@]}")
+    # Flatpak packages
+    local flatpak_packages=()
     [[ "${LAUNCHERS[heroic]}" == "1" ]] && flatpak_packages+=(com.heroicgameslauncher.hgl)
     [[ "${LAUNCHERS[bottles]}" == "1" ]] && flatpak_packages+=(com.usebottles.bottles)
     [[ "${LAUNCHERS[protonplus]}" == "1" ]] && flatpak_packages+=(com.vysp3r.ProtonPlus)
@@ -984,6 +951,8 @@ install_debian() {
     [[ "${LAUNCHERS[itch]}" == "1" ]] && flatpak_packages+=(io.itch.itch)
     [[ "${TOOLS[goverlay]}" == "1" ]] && flatpak_packages+=(io.github.benjamimgois.goverlay)
     [[ "${TOOLS[corectrl]}" == "1" ]] && flatpak_packages+=(org.corectrl.CoreCtrl)
+    [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
+    [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
     
     if [[ ${#flatpak_packages[@]} -gt 0 ]]; then
         if ! command -v flatpak &> /dev/null; then
@@ -1044,6 +1013,8 @@ install_fedora() {
     [[ "${TOOLS[winetricks]}" == "1" ]] && packages+=(winetricks)
     [[ "${TOOLS[vkbasalt]}" == "1" ]] && packages+=(vkBasalt)
     [[ "${TOOLS[corectrl]}" == "1" ]] && packages+=(corectrl)
+    [[ "${TOOLS[gamescope]}" == "1" ]] && packages+=(gamescope)
+    [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
     
     if [[ ${#packages[@]} -gt 0 ]]; then
         sudo dnf install -y "${packages[@]}" || true
@@ -1056,6 +1027,8 @@ install_fedora() {
     [[ "${LAUNCHERS[protonplus]}" == "1" ]] && flatpak_packages+=(com.vysp3r.ProtonPlus)
     [[ "${LAUNCHERS[minigalaxy]}" == "1" ]] && flatpak_packages+=(io.github.sharkwouter.Minigalaxy)
     [[ "${LAUNCHERS[itch]}" == "1" ]] && flatpak_packages+=(io.itch.itch)
+    [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
+    [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
     
     if [[ ${#flatpak_packages[@]} -gt 0 ]]; then
         if ! command -v flatpak &> /dev/null; then
@@ -1102,6 +1075,8 @@ install_opensuse() {
     [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
     [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine)
     [[ "${TOOLS[winetricks]}" == "1" ]] && packages+=(winetricks)
+    [[ "${TOOLS[gamescope]}" == "1" ]] && packages+=(gamescope)
+    [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
     
     if [[ ${#packages[@]} -gt 0 ]]; then
         sudo zypper install -y "${packages[@]}" || true
@@ -1117,6 +1092,8 @@ install_opensuse() {
     [[ "${LAUNCHERS[gamehub]}" == "1" ]] && flatpak_packages+=(com.github.tkashkin.gamehub)
     [[ "${TOOLS[goverlay]}" == "1" ]] && flatpak_packages+=(io.github.benjamimgois.goverlay)
     [[ "${TOOLS[corectrl]}" == "1" ]] && flatpak_packages+=(org.corectrl.CoreCtrl)
+    [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
+    [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
     
     if [[ ${#flatpak_packages[@]} -gt 0 ]]; then
         if ! command -v flatpak &> /dev/null; then
