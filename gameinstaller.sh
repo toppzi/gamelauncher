@@ -58,7 +58,7 @@ print_banner() {
     echo "  ║   ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗                      ║"
     echo "  ║   ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝                      ║"
     echo "  ║                                                               ║"
-    echo "  ║           GAME LAUNCHER INSTALLER                             ║"
+    echo "  ║        GAME LAUNCHER INSTALLER v0.2                           ║"
     echo "  ║                                                               ║"
     echo "  ║                    Created by Toppzi                          ║"
     echo "  ║                                                               ║"
