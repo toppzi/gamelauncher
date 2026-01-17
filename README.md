@@ -49,27 +49,35 @@ Created by **Toppzi**
 - vkBasalt (post-processing)
 - CoreCtrl (GPU control panel)
 
+### Drive Mounting
+- Auto-detect unmounted drives and partitions
+- Configure custom mount points (e.g., `/mnt/games`)
+- Give drives friendly names
+- Automatic fstab configuration for persistent mounts
+- Supports ext4, NTFS, exFAT, Btrfs, XFS filesystems
+- Proper permissions for gaming libraries
+
 ## Installation
 
 ### Quick Start
 
 ```bash
 # Download the script
-curl -O https://raw.githubusercontent.com/toppzi/gamelauncher/main/gaminstaller.sh
+curl -O https://raw.githubusercontent.com/toppzi/gamelauncher/main/gameinstaller.sh
 
 # Make it executable
-chmod +x gaminstaller.sh
+chmod +x gameinstaller.sh
 
 # Run it
-./gaminstaller.sh
+./gameinstaller.sh
 ```
 
 ### Or with wget
 
 ```bash
-wget https://raw.githubusercontent.com/toppzi/gamelauncher/main/gaminstaller.sh
+wget https://raw.githubusercontent.com/toppzi/gamelauncher/main/gameinstaller.sh
 chmod +x gaminstaller.sh
-./gaminstaller.sh
+./gameinstaller.sh
 ```
 
 ## Usage
@@ -79,16 +87,18 @@ chmod +x gaminstaller.sh
 3. Select game launchers you want to install
 4. Select graphics drivers (based on your GPU)
 5. Select additional gaming tools
-6. Review your selections
-7. Confirm to start installation
+6. Configure drive mounts (optional - for game library drives)
+7. Review your selections
+8. Confirm to start installation
 
 ### Navigation
 
 | Key | Action |
 |-----|--------|
-| `1-9` | Toggle selection |
+| `1-9` | Toggle selection / Select drive |
 | `a` | Select all |
 | `n` | Select none |
+| `r` | Remove configured mount (in drive menu) |
 | `c` | Continue to next menu |
 | `b` | Go back |
 | `q` | Quit |
