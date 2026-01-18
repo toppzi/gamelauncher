@@ -1,16 +1,17 @@
 # Linux Game Launcher Installer
 
-A simple, interactive terminal script for installing game launchers, graphics drivers, and gaming tools on Linux.
+A simple, interactive tool for installing game launchers, graphics drivers, and gaming tools on Linux. Available in both **terminal (TUI)** and **graphical (GUI)** versions.
 
 Created by **Toppzi**
 
-## Features
+## Version 0.3 Features
 
-- Auto-detects your Linux distribution
-- Auto-detects your GPU (NVIDIA, AMD, Intel)
-- Easy-to-use terminal menu interface
-- Installs game launchers, drivers, and gaming tools
-- Handles package managers and Flatpak automatically
+- **10 Game Launchers**: Steam, Lutris, Heroic, Bottles, ProtonPlus, GameHub, Minigalaxy, itch.io, RetroArch, Pegasus
+- **16+ Gaming Tools**: GameMode, MangoHud, Steam Tinker Launch, AntiMicroX, GPU Screen Recorder, and more
+- **Install/Uninstall Modes**: Full package management in both directions
+- **Update Checker**: Check for script updates and Flatpak updates
+- **System Optimizations**: CPU governor, swappiness, I/O scheduler tuning
+- **Drive Mounting**: Automatic fstab configuration for game library drives
 
 ## Supported Distributions
 
@@ -32,9 +33,12 @@ Created by **Toppzi**
 - GameHub
 - Minigalaxy (GOG)
 - itch.io client
+- RetroArch (multi-system emulator)
+- Pegasus (customizable frontend)
 
 ### Graphics Drivers
 - NVIDIA proprietary drivers
+- NVIDIA open-source kernel modules
 - Mesa (AMD/Intel open source)
 - Vulkan drivers (AMD/Intel)
 - 32-bit library support
@@ -43,11 +47,23 @@ Created by **Toppzi**
 - GameMode (CPU/GPU optimizations)
 - MangoHud (performance overlay)
 - GOverlay (MangoHud GUI)
-- Proton-GE (custom Proton builds)
+- Proton-GE (custom Proton builds via ProtonUp-Qt)
 - Wine & Winetricks
 - DXVK (DirectX to Vulkan)
 - vkBasalt (post-processing)
 - CoreCtrl (GPU control panel)
+- Steam Tinker Launch (Steam customization)
+- AntiMicroX (gamepad to keyboard/mouse mapping)
+- GPU Screen Recorder (low-overhead recording)
+- Gamescope (micro-compositor)
+- OBS Studio (streaming/recording)
+- Discord (gaming chat)
+- Flatseal (Flatpak permissions)
+
+### System Optimizations
+- **CPU Governor**: Set to performance mode for maximum gaming performance
+- **Swappiness**: Tune to 10 for gaming workloads
+- **I/O Scheduler**: Optimize for SSD (none) or HDD (mq-deadline)
 
 ### Drive Mounting
 - Auto-detect unmounted drives and partitions
@@ -59,11 +75,11 @@ Created by **Toppzi**
 
 ## Installation
 
-### Quick Start
+### Quick Start (Terminal Version)
 
 ```bash
 # Download the script
-curl -O https://raw.githubusercontent.com/toppzi/gamelauncher/main/gameinstaller.sh
+curl -O https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller.sh
 ```
 ```bash
 # Make it executable
@@ -74,24 +90,37 @@ chmod +x gameinstaller.sh
 ./gameinstaller.sh
 ```
 
-### Or with wget
+### GUI Version
+
+The graphical version uses Python with Tkinter.
 
 ```bash
-wget https://raw.githubusercontent.com/toppzi/gamelauncher/main/gameinstaller.sh
-chmod +x gaminstaller.sh
-./gameinstaller.sh
+# Download the GUI script
+curl -O https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller-gui.py
+
+# Make it executable
+chmod +x gameinstaller-gui.py
+
+# Run it
+./gameinstaller-gui.py
 ```
+
+**Note:** The GUI version requires Python 3 and Tkinter. The script will **automatically install Tkinter** if it's missing on your system.
 
 ## Usage
 
+### Terminal Version (TUI)
+
 1. Run the script in your terminal
-2. The script will detect your distro and GPU automatically
-3. Select game launchers you want to install
-4. Select graphics drivers (based on your GPU)
-5. Select additional gaming tools
-6. Configure drive mounts (optional - for game library drives)
-7. Review your selections
-8. Confirm to start installation
+2. Select mode: **Install**, **Uninstall**, or **Update Check**
+3. The script will detect your distro and GPU automatically
+4. Select game launchers you want to install/uninstall
+5. Select graphics drivers (based on your GPU)
+6. Select additional gaming tools
+7. Configure system optimizations (install mode only)
+8. Configure drive mounts (optional - for game library drives)
+9. Review your selections
+10. Confirm to start the operation
 
 ### Navigation
 
@@ -105,6 +134,20 @@ chmod +x gaminstaller.sh
 | `b` | Go back |
 | `q` | Quit |
 
+### GUI Version
+
+The GUI version provides a modern dark-themed interface with tabbed navigation:
+
+1. **Launchers Tab** - Select game launchers with checkboxes
+2. **Drivers Tab** - Select graphics drivers (with recommendations based on your GPU)
+3. **Tools Tab** - Select gaming tools and utilities
+4. **Optimize Tab** - Configure system optimizations
+5. **Drives Tab** - Configure drive mounts for game libraries
+6. **Install Tab** - Start installation and view progress
+
+**Mode Toggle**: Use the "Mode: Install/Uninstall" button to switch between modes.
+**Update Check**: Click "Check Updates" to see if a new version is available.
+
 ## Screenshots
 
 ```
@@ -117,7 +160,7 @@ chmod +x gaminstaller.sh
   ║   ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗                      ║
   ║   ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝                      ║
   ║                                                               ║
-  ║           GAME LAUNCHER INSTALLER                             ║
+  ║        GAME LAUNCHER INSTALLER v0.3                           ║
   ║                                                               ║
   ║                    Created by Toppzi                          ║
   ║                                                               ║
@@ -126,23 +169,51 @@ chmod +x gaminstaller.sh
 
 ## Requirements
 
+### Terminal Version
 - Bash 4.0+
 - `curl` or `wget` (for downloading)
 - `sudo` access (for package installation)
 - `lspci` (for GPU detection, optional)
 
+### GUI Version
+- Python 3.6+
+- Tkinter (python3-tk) - auto-installed if missing
+- `lspci` (for GPU detection, optional)
+
 ## Notes
 
 - **Do not run as root** - the script will ask for sudo when needed
-- Restart your system after installing graphics drivers
+- Restart your system after installing graphics drivers or applying system optimizations
 - On Arch Linux, you need `yay` or `paru` for AUR packages
 - Some packages are installed via Flatpak when not available in repos
+- System optimizations are persistent across reboots (via sysctl.d, tmpfiles.d, udev rules)
 
 ## Tips After Installation
 
 - Use `mangohud %command%` in Steam launch options for performance overlay
 - Use `gamemoderun %command%` for GameMode CPU/GPU optimizations
 - Combine both: `gamemoderun mangohud %command%`
+- Run Steam Tinker Launch from Steam to customize individual games
+
+## Changelog
+
+### v0.3
+- Added RetroArch and Pegasus game launchers
+- Added Steam Tinker Launch, AntiMicroX, GPU Screen Recorder tools
+- Added Gamescope, OBS Studio, Discord, Flatseal tools
+- Added system optimization options (CPU governor, swappiness, I/O scheduler)
+- Added uninstall mode to remove installed packages
+- Added update checker for script and Flatpak updates
+- Added main menu with mode selection
+- Improved package mapping for all distributions
+
+### v0.2
+- Added drive mounting configuration
+- Added automatic fstab setup
+- Improved distribution detection
+
+### v0.1
+- Initial release with basic launcher/driver/tool installation
 
 ## License
 
