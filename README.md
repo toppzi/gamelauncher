@@ -4,13 +4,15 @@ A simple, interactive tool for installing game launchers, graphics drivers, and 
 
 Created by **Toppzi**
 
-## Version 0.3 Features
+## Version 0.4 Features
 
 - **10 Game Launchers**: Steam, Lutris, Heroic, Bottles, ProtonPlus, GameHub, Minigalaxy, itch.io, RetroArch, Pegasus
 - **16+ Gaming Tools**: GameMode, MangoHud, Steam Tinker Launch, AntiMicroX, GPU Screen Recorder, and more
 - **Install/Uninstall Modes**: Full package management in both directions
 - **Update Checker**: Check for script updates and Flatpak updates
 - **System Optimizations**: CPU governor, swappiness, I/O scheduler tuning
+- **Performance Tweaks (Advanced)**: Gaming kernels, ZRAM, vm.max_map_count, file limits
+- **Quality of Life**: Controller support, low-latency audio, shader cache, Protontricks
 - **Drive Mounting**: Automatic fstab configuration for game library drives
 
 ## Supported Distributions
@@ -64,6 +66,18 @@ Created by **Toppzi**
 - **CPU Governor**: Set to performance mode for maximum gaming performance
 - **Swappiness**: Tune to 10 for gaming workloads
 - **I/O Scheduler**: Optimize for SSD (none) or HDD (mq-deadline)
+
+### Performance Tweaks (Advanced Users)
+- **Gaming Kernel**: Install linux-zen (Arch) or Xanmod (Debian/Ubuntu)
+- **ZRAM**: Compressed swap for systems with less RAM
+- **vm.max_map_count**: Increase for demanding games (Steam Deck value)
+- **File Limits**: Raise ulimits for games that need many file descriptors
+
+### Quality of Life
+- **Controller Support**: Xbox/PlayStation controller drivers and udev rules
+- **Low-Latency Audio**: PipeWire configuration for gaming
+- **Shader Cache**: Configure Mesa and Steam shader cache directories
+- **Protontricks**: Winetricks for Proton games
 
 ### Drive Mounting
 - Auto-detect unmounted drives and partitions
@@ -196,6 +210,13 @@ The GUI version provides a modern dark-themed interface with tabbed navigation:
 - Run Steam Tinker Launch from Steam to customize individual games
 
 ## Changelog
+
+### v0.4
+- Added Performance Tweaks tab with advanced options (gaming kernels, ZRAM, vm.max_map_count, file limits)
+- Added Quality of Life tab (controller support, low-latency audio, shader cache, Protontricks)
+- Added warning labels for advanced options
+- Improved menu navigation flow in TUI
+- Full feature parity between TUI and GUI
 
 ### v0.3
 - Added RetroArch and Pegasus game launchers
