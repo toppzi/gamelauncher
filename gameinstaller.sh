@@ -34,9 +34,16 @@ declare -A DRIVERS
 declare -A TOOLS
 
 # Ordered keys for consistent menu display
-LAUNCHER_KEYS=(steam lutris heroic bottles protonplus gamehub minigalaxy itch)
+LAUNCHER_KEYS=(steam lutris heroic bottles protonplus gamehub minigalaxy itch retroarch pegasus)
 DRIVER_KEYS=(nvidia nvidia_32bit mesa vulkan_amd vulkan_intel amd_32bit intel_32bit)
-TOOL_KEYS=(gamemode mangohud goverlay protonge wine winetricks dxvk vkbasalt corectrl gamescope discord obs flatseal)
+TOOL_KEYS=(gamemode mangohud goverlay protonge wine winetricks dxvk vkbasalt corectrl gamescope discord obs flatseal steamtinker antimicrox gpu_recorder)
+
+# System optimization settings
+declare -A OPTIMIZATIONS
+OPTIMIZATION_KEYS=(cpu_governor swappiness io_scheduler)
+
+# Mode (install or uninstall)
+OPERATION_MODE="install"
 
 # Drive mount configurations
 declare -a AVAILABLE_DRIVES
@@ -58,7 +65,7 @@ print_banner() {
     echo "  ║   ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗                      ║"
     echo "  ║   ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝                      ║"
     echo "  ║                                                               ║"
-    echo "  ║        GAME LAUNCHER INSTALLER v0.2.1                         ║"
+    echo "  ║        GAME LAUNCHER INSTALLER v0.3                           ║"
     echo "  ║                                                               ║"
     echo "  ║                    Created by Toppzi                          ║"
     echo "  ║                                                               ║"
@@ -254,6 +261,8 @@ launcher_menu() {
         echo -e "  6) $(show_checkbox "${LAUNCHERS[gamehub]}")  GameHub        - Unified game library"
         echo -e "  7) $(show_checkbox "${LAUNCHERS[minigalaxy]}")  Minigalaxy     - GOG client"
         echo -e "  8) $(show_checkbox "${LAUNCHERS[itch]}")  itch           - itch.io client"
+        echo -e "  9) $(show_checkbox "${LAUNCHERS[retroarch]}")  RetroArch      - Emulator frontend"
+        echo -e " 10) $(show_checkbox "${LAUNCHERS[pegasus]}")  Pegasus        - Game collection organizer"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
         echo -e "  ${GREEN}c) Continue to Drivers${NC}"
@@ -270,6 +279,8 @@ launcher_menu() {
             6) toggle_selection LAUNCHERS gamehub ;;
             7) toggle_selection LAUNCHERS minigalaxy ;;
             8) toggle_selection LAUNCHERS itch ;;
+            9) toggle_selection LAUNCHERS retroarch ;;
+            10) toggle_selection LAUNCHERS pegasus ;;
             a|A)
                 for key in "${LAUNCHER_KEYS[@]}"; do
                     LAUNCHERS[$key]="1"
@@ -382,22 +393,25 @@ tools_menu() {
         echo ""
         echo "  Select additional gaming tools:"
         echo ""
-        echo -e "  1) $(show_checkbox "${TOOLS[gamemode]}")  GameMode       - CPU/GPU optimizations"
-        echo -e "  2) $(show_checkbox "${TOOLS[mangohud]}")  MangoHud       - Performance overlay"
-        echo -e "  3) $(show_checkbox "${TOOLS[goverlay]}")  GOverlay       - MangoHud GUI config"
-        echo -e "  4) $(show_checkbox "${TOOLS[protonge]}")  Proton-GE      - Custom Proton builds"
-        echo -e "  5) $(show_checkbox "${TOOLS[wine]}")  Wine           - Windows compatibility"
-        echo -e "  6) $(show_checkbox "${TOOLS[winetricks]}")  Winetricks     - Wine helper scripts"
-        echo -e "  7) $(show_checkbox "${TOOLS[dxvk]}")  DXVK           - DirectX to Vulkan"
-        echo -e "  8) $(show_checkbox "${TOOLS[vkbasalt]}")  vkBasalt       - Vulkan post-processing"
-        echo -e "  9) $(show_checkbox "${TOOLS[corectrl]}")  CoreCtrl       - GPU control panel"
-        echo -e "  10) $(show_checkbox "${TOOLS[gamescope]}")  Gamescope      - Micro-compositor"
-        echo -e "  11) $(show_checkbox "${TOOLS[discord]}")  Discord        - Voice & Text Chat"
-        echo -e "  12) $(show_checkbox "${TOOLS[obs]}")  OBS Studio     - Streaming/Recording"
-        echo -e "  13) $(show_checkbox "${TOOLS[flatseal]}")  Flatseal       - Flatpak Permissions"
+        echo -e "  1) $(show_checkbox "${TOOLS[gamemode]}")  GameMode          - CPU/GPU optimizations"
+        echo -e "  2) $(show_checkbox "${TOOLS[mangohud]}")  MangoHud          - Performance overlay"
+        echo -e "  3) $(show_checkbox "${TOOLS[goverlay]}")  GOverlay          - MangoHud GUI config"
+        echo -e "  4) $(show_checkbox "${TOOLS[protonge]}")  Proton-GE         - Custom Proton builds"
+        echo -e "  5) $(show_checkbox "${TOOLS[wine]}")  Wine              - Windows compatibility"
+        echo -e "  6) $(show_checkbox "${TOOLS[winetricks]}")  Winetricks        - Wine helper scripts"
+        echo -e "  7) $(show_checkbox "${TOOLS[dxvk]}")  DXVK              - DirectX to Vulkan"
+        echo -e "  8) $(show_checkbox "${TOOLS[vkbasalt]}")  vkBasalt          - Vulkan post-processing"
+        echo -e "  9) $(show_checkbox "${TOOLS[corectrl]}")  CoreCtrl          - GPU control panel"
+        echo -e " 10) $(show_checkbox "${TOOLS[gamescope]}")  Gamescope         - Micro-compositor"
+        echo -e " 11) $(show_checkbox "${TOOLS[discord]}")  Discord           - Voice & Text Chat"
+        echo -e " 12) $(show_checkbox "${TOOLS[obs]}")  OBS Studio        - Streaming/Recording"
+        echo -e " 13) $(show_checkbox "${TOOLS[flatseal]}")  Flatseal          - Flatpak Permissions"
+        echo -e " 14) $(show_checkbox "${TOOLS[steamtinker]}")  Steam Tinker      - Steam game tweaking"
+        echo -e " 15) $(show_checkbox "${TOOLS[antimicrox]}")  AntiMicroX        - Controller remapping"
+        echo -e " 16) $(show_checkbox "${TOOLS[gpu_recorder]}")  GPU Screen Rec    - Low-overhead recording"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
+        echo -e "  ${GREEN}c) Continue to System Optimization${NC}"
         echo -e "  ${YELLOW}b) Back to Drivers${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
@@ -417,6 +431,9 @@ tools_menu() {
             11) toggle_selection TOOLS discord ;;
             12) toggle_selection TOOLS obs ;;
             13) toggle_selection TOOLS flatseal ;;
+            14) toggle_selection TOOLS steamtinker ;;
+            15) toggle_selection TOOLS antimicrox ;;
+            16) toggle_selection TOOLS gpu_recorder ;;
             a|A)
                 for key in "${TOOL_KEYS[@]}"; do
                     TOOLS[$key]="1"
@@ -653,6 +670,147 @@ drives_menu() {
     done
 }
 
+# ============================================================================
+# SYSTEM OPTIMIZATION FUNCTIONS
+# ============================================================================
+
+get_current_governor() {
+    cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo "unknown"
+}
+
+get_current_swappiness() {
+    cat /proc/sys/vm/swappiness 2>/dev/null || echo "60"
+}
+
+get_current_io_scheduler() {
+    local device
+    device=$(lsblk -dno NAME | head -1)
+    cat "/sys/block/$device/queue/scheduler" 2>/dev/null | grep -oP '\[\K[^\]]+' || echo "unknown"
+}
+
+optimization_menu() {
+    local choice
+    while true; do
+        print_banner
+        show_system_info
+        
+        echo -e "${CYAN}══════════════════════════════════════════${NC}"
+        echo -e "${CYAN}        SYSTEM OPTIMIZATION               ${NC}"
+        echo -e "${CYAN}══════════════════════════════════════════${NC}"
+        echo ""
+        echo "  Current System Settings:"
+        echo ""
+        echo -e "  CPU Governor:    ${GREEN}$(get_current_governor)${NC}"
+        echo -e "  Swappiness:      ${GREEN}$(get_current_swappiness)${NC}"
+        echo -e "  I/O Scheduler:   ${GREEN}$(get_current_io_scheduler)${NC}"
+        echo ""
+        echo "  Select optimizations to apply:"
+        echo ""
+        echo -e "  1) $(show_checkbox "${OPTIMIZATIONS[cpu_governor]}")  CPU Governor     - Set to 'performance' mode"
+        echo -e "  2) $(show_checkbox "${OPTIMIZATIONS[swappiness]}")  Swappiness       - Reduce to 10 (gaming optimal)"
+        echo -e "  3) $(show_checkbox "${OPTIMIZATIONS[io_scheduler]}")  I/O Scheduler    - Set to 'mq-deadline' or 'none'"
+        echo ""
+        echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
+        echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
+        echo -e "  ${YELLOW}b) Back to Tools${NC}"
+        echo -e "  ${RED}q) Quit${NC}"
+        echo ""
+        read -rp "  Enter choice: " choice
+        
+        case "$choice" in
+            1) toggle_selection OPTIMIZATIONS cpu_governor ;;
+            2) toggle_selection OPTIMIZATIONS swappiness ;;
+            3) toggle_selection OPTIMIZATIONS io_scheduler ;;
+            a|A)
+                for key in "${OPTIMIZATION_KEYS[@]}"; do
+                    OPTIMIZATIONS[$key]="1"
+                done
+                ;;
+            n|N)
+                for key in "${OPTIMIZATION_KEYS[@]}"; do
+                    OPTIMIZATIONS[$key]="0"
+                done
+                ;;
+            c|C) return 0 ;;
+            b|B) return 1 ;;
+            q|Q) exit 0 ;;
+        esac
+    done
+}
+
+apply_optimizations() {
+    local applied=false
+    
+    if [[ "${OPTIMIZATIONS[cpu_governor]}" == "1" ]]; then
+        print_info "Setting CPU governor to 'performance'..."
+        
+        # Check if cpupower is available
+        if command -v cpupower &> /dev/null; then
+            sudo cpupower frequency-set -g performance || true
+        else
+            # Direct sysfs method
+            for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+                echo "performance" | sudo tee "$cpu" > /dev/null 2>&1 || true
+            done
+        fi
+        
+        # Make persistent via sysctl or service
+        if [[ -d /etc/tmpfiles.d ]]; then
+            echo 'w /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor - - - - performance' | \
+                sudo tee /etc/tmpfiles.d/cpu-governor.conf > /dev/null
+        fi
+        
+        print_success "CPU governor set to performance"
+        applied=true
+    fi
+    
+    if [[ "${OPTIMIZATIONS[swappiness]}" == "1" ]]; then
+        print_info "Setting swappiness to 10..."
+        
+        # Apply immediately
+        sudo sysctl -w vm.swappiness=10 > /dev/null 2>&1 || true
+        
+        # Make persistent
+        if ! grep -q "vm.swappiness" /etc/sysctl.conf 2>/dev/null; then
+            echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.conf > /dev/null
+        else
+            sudo sed -i 's/vm.swappiness=.*/vm.swappiness=10/' /etc/sysctl.conf
+        fi
+        
+        print_success "Swappiness set to 10"
+        applied=true
+    fi
+    
+    if [[ "${OPTIMIZATIONS[io_scheduler]}" == "1" ]]; then
+        print_info "Optimizing I/O scheduler..."
+        
+        # Create udev rule for SSDs (none) and HDDs (mq-deadline)
+        local udev_rule='ACTION=="add|change", KERNEL=="sd[a-z]|nvme[0-9]*", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="mq-deadline"'
+        
+        echo "$udev_rule" | sudo tee /etc/udev/rules.d/60-io-scheduler.rules > /dev/null
+        
+        # Apply immediately to current devices
+        for device in /sys/block/sd* /sys/block/nvme*; do
+            [[ -d "$device" ]] || continue
+            local rotational
+            rotational=$(cat "$device/queue/rotational" 2>/dev/null || echo "1")
+            if [[ "$rotational" == "0" ]]; then
+                echo "none" | sudo tee "$device/queue/scheduler" > /dev/null 2>&1 || true
+            else
+                echo "mq-deadline" | sudo tee "$device/queue/scheduler" > /dev/null 2>&1 || true
+            fi
+        done
+        
+        print_success "I/O scheduler optimized"
+        applied=true
+    fi
+    
+    if [[ "$applied" == true ]]; then
+        echo ""
+    fi
+}
+
 apply_mount_configs() {
     if [[ ${#MOUNT_CONFIGS[@]} -eq 0 ]]; then
         return 0
@@ -767,6 +925,18 @@ review_menu() {
     has_any_selected TOOLS || echo "    (none selected)"
     
     echo ""
+    echo -e "  ${GREEN}System Optimizations:${NC}"
+    local has_opt=false
+    for key in "${OPTIMIZATION_KEYS[@]}"; do
+        if [[ "${OPTIMIZATIONS[$key]}" == "1" ]]; then
+            echo "    - $key"
+            has_selection=true
+            has_opt=true
+        fi
+    done
+    [[ "$has_opt" == false ]] && echo "    (none selected)"
+    
+    echo ""
     echo -e "  ${GREEN}Drive Mounts:${NC}"
     if [[ ${#MOUNT_CONFIGS[@]} -gt 0 ]]; then
         for config in "${MOUNT_CONFIGS[@]}"; do
@@ -799,7 +969,10 @@ review_menu() {
         esac
     fi
     
-    echo -e "  ${GREEN}i) Start Installation${NC}"
+    local action_text="Installation"
+    [[ "$OPERATION_MODE" == "uninstall" ]] && action_text="Uninstallation"
+    
+    echo -e "  ${GREEN}i) Start $action_text${NC}"
     echo -e "  ${YELLOW}b) Back to Drive Mounting${NC}"
     echo -e "  ${RED}q) Quit${NC}"
     echo ""
@@ -849,6 +1022,7 @@ install_arch() {
     [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
     [[ "${LAUNCHERS[bottles]}" == "1" ]] && packages+=(bottles)
     [[ "${LAUNCHERS[gamehub]}" == "1" ]] && packages+=(gamehub)
+    [[ "${LAUNCHERS[retroarch]}" == "1" ]] && packages+=(retroarch retroarch-assets-xmb)
     
     # Drivers
     [[ "${DRIVERS[nvidia]}" == "1" ]] && packages+=(nvidia nvidia-utils nvidia-settings)
@@ -871,6 +1045,7 @@ install_arch() {
     [[ "${TOOLS[discord]}" == "1" ]] && packages+=(discord)
     [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
     [[ "${TOOLS[flatseal]}" == "1" ]] && packages+=(flatseal)
+    [[ "${TOOLS[antimicrox]}" == "1" ]] && packages+=(antimicrox)
     
     if [[ ${#packages[@]} -gt 0 ]]; then
         sudo pacman -S --needed --noconfirm "${packages[@]}" || true
@@ -882,8 +1057,11 @@ install_arch() {
     [[ "${LAUNCHERS[protonplus]}" == "1" ]] && aur_packages+=(protonplus)
     [[ "${LAUNCHERS[minigalaxy]}" == "1" ]] && aur_packages+=(minigalaxy)
     [[ "${LAUNCHERS[itch]}" == "1" ]] && aur_packages+=(itch)
+    [[ "${LAUNCHERS[pegasus]}" == "1" ]] && aur_packages+=(pegasus-frontend-git)
     [[ "${TOOLS[protonge]}" == "1" ]] && aur_packages+=(proton-ge-custom-bin)
     [[ "${TOOLS[vkbasalt]}" == "1" ]] && aur_packages+=(vkbasalt lib32-vkbasalt)
+    [[ "${TOOLS[steamtinker]}" == "1" ]] && aur_packages+=(steamtinkerlaunch)
+    [[ "${TOOLS[gpu_recorder]}" == "1" ]] && aur_packages+=(gpu-screen-recorder-git)
     
     if [[ ${#aur_packages[@]} -gt 0 ]]; then
         if command -v yay &> /dev/null; then
@@ -917,17 +1095,67 @@ install_debian() {
     sudo apt-get update || true
     
     local packages=()
+    local flatpak_launchers=()
     
-    # Launchers - handle Debian vs Ubuntu differences
+    # Launchers - check if packages are actually installable, fallback to Flatpak
     if [[ "${LAUNCHERS[steam]}" == "1" ]]; then
-        if [[ "$DISTRO" == "debian" ]]; then
-            packages+=(steam-installer)
-        else
+        # Check if Steam is actually installable (not just referenced)
+        if apt-cache policy steam 2>/dev/null | grep -q "Candidate:" && \
+           ! apt-cache policy steam 2>/dev/null | grep -q "Candidate: (none)"; then
             packages+=(steam)
+        else
+            # Prompt to add non-free repository on Debian stable (bookworm)
+            if [[ "$DISTRO" == "debian" ]]; then
+                # Check Debian version
+                local debian_version=$(cat /etc/debian_version 2>/dev/null)
+                if [[ "$debian_version" == "12"* ]] || [[ "$debian_version" == "bookworm"* ]]; then
+                    print_warning "Steam requires non-free repository on Debian."
+                    print_info "Add this line to /etc/apt/sources.list:"
+                    echo ""
+                    echo "  deb http://deb.debian.org/debian bookworm main contrib non-free"
+                    echo ""
+                    read -p "Would you like to add this repository now? [y/N]: " add_repo
+                    if [[ "$add_repo" =~ ^[Yy]$ ]]; then
+                        echo "deb http://deb.debian.org/debian bookworm main contrib non-free" | sudo tee -a /etc/apt/sources.list
+                        sudo apt-get update
+                        if apt-cache policy steam 2>/dev/null | grep -q "Candidate:" && \
+                           ! apt-cache policy steam 2>/dev/null | grep -q "Candidate: (none)"; then
+                            packages+=(steam)
+                        else
+                            print_warning "Steam still not found, using Flatpak instead..."
+                            flatpak_launchers+=(com.valvesoftware.Steam)
+                        fi
+                    else
+                        print_info "Using Flatpak for Steam instead..."
+                        flatpak_launchers+=(com.valvesoftware.Steam)
+                    fi
+                else
+                    # Debian Testing/Sid - use Flatpak (more reliable)
+                    print_info "Debian Testing/Sid detected - using Flatpak for Steam..."
+                    flatpak_launchers+=(com.valvesoftware.Steam)
+                fi
+            else
+                # Ubuntu/other - use Flatpak
+                print_info "Steam not in apt, using Flatpak..."
+                flatpak_launchers+=(com.valvesoftware.Steam)
+            fi
         fi
     fi
-    [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
-    [[ "${LAUNCHERS[gamehub]}" == "1" ]] && packages+=(gamehub)
+    
+    if [[ "${LAUNCHERS[lutris]}" == "1" ]]; then
+        if apt-cache policy lutris 2>/dev/null | grep -q "Candidate:" && \
+           ! apt-cache policy lutris 2>/dev/null | grep -q "Candidate: (none)"; then
+            packages+=(lutris)
+        else
+            print_info "Lutris not in apt, using Flatpak..."
+            flatpak_launchers+=(net.lutris.Lutris)
+        fi
+    fi
+    
+    # GameHub, RetroArch, Pegasus - use Flatpak (rarely in repos)
+    [[ "${LAUNCHERS[gamehub]}" == "1" ]] && flatpak_launchers+=(com.github.tkashkin.gamehub)
+    [[ "${LAUNCHERS[retroarch]}" == "1" ]] && flatpak_launchers+=(org.libretro.RetroArch)
+    [[ "${LAUNCHERS[pegasus]}" == "1" ]] && flatpak_launchers+=(org.pegasus_frontend.Pegasus)
     
     # Drivers
     if [[ "${DRIVERS[nvidia]}" == "1" ]]; then
@@ -953,8 +1181,8 @@ install_debian() {
         sudo apt-get install -y "${packages[@]}" || true
     fi
     
-    # Flatpak packages
-    local flatpak_packages=()
+    # Flatpak packages - combine with launchers that need Flatpak
+    local flatpak_packages=("${flatpak_launchers[@]}")
     [[ "${LAUNCHERS[heroic]}" == "1" ]] && flatpak_packages+=(com.heroicgameslauncher.hgl)
     [[ "${LAUNCHERS[bottles]}" == "1" ]] && flatpak_packages+=(com.usebottles.bottles)
     [[ "${LAUNCHERS[protonplus]}" == "1" ]] && flatpak_packages+=(com.vysp3r.ProtonPlus)
@@ -964,6 +1192,9 @@ install_debian() {
     [[ "${TOOLS[corectrl]}" == "1" ]] && flatpak_packages+=(org.corectrl.CoreCtrl)
     [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
     [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
+    [[ "${TOOLS[steamtinker]}" == "1" ]] && flatpak_packages+=(com.github.Matoking.SteamTinkerLaunch)
+    [[ "${TOOLS[antimicrox]}" == "1" ]] && flatpak_packages+=(io.github.antimicrox.antimicrox)
+    [[ "${TOOLS[gpu_recorder]}" == "1" ]] && flatpak_packages+=(com.dec05eba.gpu_screen_recorder)
     
     if [[ ${#flatpak_packages[@]} -gt 0 ]]; then
         if ! command -v flatpak &> /dev/null; then
@@ -1003,6 +1234,7 @@ install_fedora() {
     [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
     [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
     [[ "${LAUNCHERS[gamehub]}" == "1" ]] && packages+=(gamehub)
+    [[ "${LAUNCHERS[retroarch]}" == "1" ]] && packages+=(retroarch)
     
     # Drivers
     if [[ "${DRIVERS[nvidia]}" == "1" ]]; then
@@ -1026,6 +1258,7 @@ install_fedora() {
     [[ "${TOOLS[corectrl]}" == "1" ]] && packages+=(corectrl)
     [[ "${TOOLS[gamescope]}" == "1" ]] && packages+=(gamescope)
     [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
+    [[ "${TOOLS[antimicrox]}" == "1" ]] && packages+=(antimicrox)
     
     if [[ ${#packages[@]} -gt 0 ]]; then
         sudo dnf install -y "${packages[@]}" || true
@@ -1038,8 +1271,11 @@ install_fedora() {
     [[ "${LAUNCHERS[protonplus]}" == "1" ]] && flatpak_packages+=(com.vysp3r.ProtonPlus)
     [[ "${LAUNCHERS[minigalaxy]}" == "1" ]] && flatpak_packages+=(io.github.sharkwouter.Minigalaxy)
     [[ "${LAUNCHERS[itch]}" == "1" ]] && flatpak_packages+=(io.itch.itch)
+    [[ "${LAUNCHERS[pegasus]}" == "1" ]] && flatpak_packages+=(org.pegasus_frontend.Pegasus)
     [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
     [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
+    [[ "${TOOLS[steamtinker]}" == "1" ]] && flatpak_packages+=(com.github.Matoking.SteamTinkerLaunch)
+    [[ "${TOOLS[gpu_recorder]}" == "1" ]] && flatpak_packages+=(com.dec05eba.gpu_screen_recorder)
     
     if [[ ${#flatpak_packages[@]} -gt 0 ]]; then
         if ! command -v flatpak &> /dev/null; then
@@ -1101,10 +1337,15 @@ install_opensuse() {
     [[ "${LAUNCHERS[minigalaxy]}" == "1" ]] && flatpak_packages+=(io.github.sharkwouter.Minigalaxy)
     [[ "${LAUNCHERS[itch]}" == "1" ]] && flatpak_packages+=(io.itch.itch)
     [[ "${LAUNCHERS[gamehub]}" == "1" ]] && flatpak_packages+=(com.github.tkashkin.gamehub)
+    [[ "${LAUNCHERS[retroarch]}" == "1" ]] && flatpak_packages+=(org.libretro.RetroArch)
+    [[ "${LAUNCHERS[pegasus]}" == "1" ]] && flatpak_packages+=(org.pegasus_frontend.Pegasus)
     [[ "${TOOLS[goverlay]}" == "1" ]] && flatpak_packages+=(io.github.benjamimgois.goverlay)
     [[ "${TOOLS[corectrl]}" == "1" ]] && flatpak_packages+=(org.corectrl.CoreCtrl)
     [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
     [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
+    [[ "${TOOLS[steamtinker]}" == "1" ]] && flatpak_packages+=(com.github.Matoking.SteamTinkerLaunch)
+    [[ "${TOOLS[antimicrox]}" == "1" ]] && flatpak_packages+=(io.github.antimicrox.antimicrox)
+    [[ "${TOOLS[gpu_recorder]}" == "1" ]] && flatpak_packages+=(com.dec05eba.gpu_screen_recorder)
     
     if [[ ${#flatpak_packages[@]} -gt 0 ]]; then
         if ! command -v flatpak &> /dev/null; then
@@ -1125,6 +1366,73 @@ install_opensuse() {
             flatpak install -y --noninteractive flathub net.davidotek.pupgui2 || true
         fi
     fi
+}
+
+# ============================================================================
+# UPDATE CHECKER
+# ============================================================================
+
+SCRIPT_VERSION="0.3"
+UPDATE_URL="https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller.sh"
+
+check_for_updates() {
+    print_banner
+    echo -e "${CYAN}══════════════════════════════════════════${NC}"
+    echo -e "${CYAN}            UPDATE CHECKER                ${NC}"
+    echo -e "${CYAN}══════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "  Current version: ${GREEN}$SCRIPT_VERSION${NC}"
+    echo ""
+    print_info "Checking for updates..."
+    
+    # Try to get the latest version from the remote script
+    local remote_version
+    remote_version=$(curl -sL "$UPDATE_URL" 2>/dev/null | grep -oP 'SCRIPT_VERSION="\K[^"]+' | head -1) || true
+    
+    if [[ -z "$remote_version" ]]; then
+        print_warning "Could not check for updates (no internet or repo unavailable)."
+        echo ""
+        print_info "You can manually download the latest version from:"
+        echo "  https://github.com/Toppzi/gameinstaller"
+    elif [[ "$remote_version" != "$SCRIPT_VERSION" ]]; then
+        echo ""
+        echo -e "  ${GREEN}New version available: $remote_version${NC}"
+        echo ""
+        print_info "To update, download the latest version from:"
+        echo "  https://github.com/Toppzi/gameinstaller"
+        echo ""
+        print_info "Or run:"
+        echo "  curl -sL $UPDATE_URL -o gameinstaller.sh && chmod +x gameinstaller.sh"
+    else
+        echo ""
+        print_success "You are running the latest version!"
+    fi
+    
+    echo ""
+    
+    # Check for Flatpak updates
+    if command -v flatpak &> /dev/null; then
+        echo ""
+        print_info "Checking for Flatpak updates..."
+        local updates
+        updates=$(flatpak remote-ls --updates 2>/dev/null | wc -l) || updates=0
+        
+        if [[ "$updates" -gt 0 ]]; then
+            echo ""
+            echo -e "  ${GREEN}$updates Flatpak update(s) available${NC}"
+            echo ""
+            read -rp "  Would you like to update Flatpak apps now? [y/N]: " update_flatpak
+            if [[ "$update_flatpak" =~ ^[Yy]$ ]]; then
+                flatpak update -y || true
+                print_success "Flatpak apps updated!"
+            fi
+        else
+            print_success "All Flatpak apps are up to date!"
+        fi
+    fi
+    
+    echo ""
+    press_enter
 }
 
 run_installation() {
@@ -1152,6 +1460,9 @@ run_installation() {
             ;;
     esac
     
+    # Apply system optimizations
+    apply_optimizations
+    
     # Apply drive mount configurations
     apply_mount_configs
     
@@ -1178,6 +1489,109 @@ run_installation() {
     press_enter
 }
 
+run_uninstallation() {
+    print_banner
+    echo ""
+    print_info "Starting uninstallation..."
+    echo ""
+    
+    # Uninstall Flatpak packages
+    local flatpak_packages=()
+    [[ "${LAUNCHERS[steam]}" == "1" ]] && flatpak_packages+=(com.valvesoftware.Steam)
+    [[ "${LAUNCHERS[lutris]}" == "1" ]] && flatpak_packages+=(net.lutris.Lutris)
+    [[ "${LAUNCHERS[heroic]}" == "1" ]] && flatpak_packages+=(com.heroicgameslauncher.hgl)
+    [[ "${LAUNCHERS[bottles]}" == "1" ]] && flatpak_packages+=(com.usebottles.bottles)
+    [[ "${LAUNCHERS[protonplus]}" == "1" ]] && flatpak_packages+=(com.vysp3r.ProtonPlus)
+    [[ "${LAUNCHERS[gamehub]}" == "1" ]] && flatpak_packages+=(com.github.tkashkin.gamehub)
+    [[ "${LAUNCHERS[minigalaxy]}" == "1" ]] && flatpak_packages+=(io.github.sharkwouter.Minigalaxy)
+    [[ "${LAUNCHERS[itch]}" == "1" ]] && flatpak_packages+=(io.itch.itch)
+    [[ "${LAUNCHERS[retroarch]}" == "1" ]] && flatpak_packages+=(org.libretro.RetroArch)
+    [[ "${LAUNCHERS[pegasus]}" == "1" ]] && flatpak_packages+=(org.pegasus_frontend.Pegasus)
+    [[ "${TOOLS[goverlay]}" == "1" ]] && flatpak_packages+=(io.github.benjamimgois.goverlay)
+    [[ "${TOOLS[corectrl]}" == "1" ]] && flatpak_packages+=(org.corectrl.CoreCtrl)
+    [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
+    [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
+    [[ "${TOOLS[steamtinker]}" == "1" ]] && flatpak_packages+=(com.github.Matoking.SteamTinkerLaunch)
+    [[ "${TOOLS[antimicrox]}" == "1" ]] && flatpak_packages+=(io.github.antimicrox.antimicrox)
+    [[ "${TOOLS[gpu_recorder]}" == "1" ]] && flatpak_packages+=(com.dec05eba.gpu_screen_recorder)
+    [[ "${TOOLS[protonge]}" == "1" ]] && flatpak_packages+=(net.davidotek.pupgui2)
+    
+    if [[ ${#flatpak_packages[@]} -gt 0 ]] && command -v flatpak &> /dev/null; then
+        print_info "Removing Flatpak packages..."
+        for pkg in "${flatpak_packages[@]}"; do
+            flatpak uninstall -y "$pkg" 2>/dev/null || true
+        done
+    fi
+    
+    # Uninstall native packages based on distro
+    local packages=()
+    
+    case "$DISTRO_FAMILY" in
+        arch)
+            [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
+            [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
+            [[ "${LAUNCHERS[bottles]}" == "1" ]] && packages+=(bottles)
+            [[ "${LAUNCHERS[retroarch]}" == "1" ]] && packages+=(retroarch)
+            [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode lib32-gamemode)
+            [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud lib32-mangohud)
+            [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine)
+            [[ "${TOOLS[discord]}" == "1" ]] && packages+=(discord)
+            [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
+            
+            if [[ ${#packages[@]} -gt 0 ]]; then
+                sudo pacman -Rns --noconfirm "${packages[@]}" 2>/dev/null || true
+            fi
+            ;;
+        debian)
+            [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
+            [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
+            [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode)
+            [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
+            [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine wine64 wine32)
+            [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
+            
+            if [[ ${#packages[@]} -gt 0 ]]; then
+                sudo apt-get remove -y "${packages[@]}" 2>/dev/null || true
+                sudo apt-get autoremove -y || true
+            fi
+            ;;
+        fedora)
+            [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
+            [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
+            [[ "${LAUNCHERS[retroarch]}" == "1" ]] && packages+=(retroarch)
+            [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode)
+            [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
+            [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine)
+            [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
+            
+            if [[ ${#packages[@]} -gt 0 ]]; then
+                sudo dnf remove -y "${packages[@]}" 2>/dev/null || true
+            fi
+            ;;
+        opensuse)
+            [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
+            [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
+            [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode)
+            [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
+            [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine)
+            [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
+            
+            if [[ ${#packages[@]} -gt 0 ]]; then
+                sudo zypper remove -y "${packages[@]}" 2>/dev/null || true
+            fi
+            ;;
+    esac
+    
+    echo ""
+    echo -e "${GREEN}══════════════════════════════════════════${NC}"
+    echo -e "${GREEN}       UNINSTALLATION COMPLETE!           ${NC}"
+    echo -e "${GREEN}══════════════════════════════════════════${NC}"
+    echo ""
+    print_success "Selected packages have been removed!"
+    echo ""
+    press_enter
+}
+
 # ============================================================================
 # MAIN PROGRAM
 # ============================================================================
@@ -1195,6 +1609,50 @@ init_selections() {
     for key in "${TOOL_KEYS[@]}"; do
         TOOLS[$key]="0"
     done
+    
+    for key in "${OPTIMIZATION_KEYS[@]}"; do
+        OPTIMIZATIONS[$key]="0"
+    done
+}
+
+main_menu() {
+    local choice
+    print_banner
+    show_system_info
+    
+    echo -e "${CYAN}══════════════════════════════════════════${NC}"
+    echo -e "${CYAN}             MAIN MENU                    ${NC}"
+    echo -e "${CYAN}══════════════════════════════════════════${NC}"
+    echo ""
+    echo "  What would you like to do?"
+    echo ""
+    echo -e "  1) ${GREEN}Install${NC}   - Install launchers, drivers, tools"
+    echo -e "  2) ${YELLOW}Uninstall${NC} - Remove installed packages"
+    echo -e "  3) ${BLUE}Update${NC}    - Check for updates"
+    echo -e "  4) ${RED}Quit${NC}"
+    echo ""
+    read -rp "  Enter choice: " choice
+    
+    case "$choice" in
+        1)
+            OPERATION_MODE="install"
+            return 0
+            ;;
+        2)
+            OPERATION_MODE="uninstall"
+            return 0
+            ;;
+        3)
+            check_for_updates
+            return 1
+            ;;
+        4|q|Q)
+            exit 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 }
 
 main() {
@@ -1210,6 +1668,11 @@ main() {
     press_enter
     
     init_selections
+    
+    # Show main menu first
+    while ! main_menu; do
+        :
+    done
     
     # Main menu loop
     local current_menu="launcher"
@@ -1229,24 +1692,43 @@ main() {
                 ;;
             tools)
                 if tools_menu; then
-                    current_menu="drives"
+                    if [[ "$OPERATION_MODE" == "install" ]]; then
+                        current_menu="optimization"
+                    else
+                        current_menu="review"
+                    fi
                 else
                     current_menu="driver"
+                fi
+                ;;
+            optimization)
+                if optimization_menu; then
+                    current_menu="drives"
+                else
+                    current_menu="tools"
                 fi
                 ;;
             drives)
                 if drives_menu; then
                     current_menu="review"
                 else
-                    current_menu="tools"
+                    current_menu="optimization"
                 fi
                 ;;
             review)
                 if review_menu; then
-                    run_installation
+                    if [[ "$OPERATION_MODE" == "install" ]]; then
+                        run_installation
+                    else
+                        run_uninstallation
+                    fi
                     exit 0
                 else
-                    current_menu="drives"
+                    if [[ "$OPERATION_MODE" == "install" ]]; then
+                        current_menu="drives"
+                    else
+                        current_menu="tools"
+                    fi
                 fi
                 ;;
         esac
