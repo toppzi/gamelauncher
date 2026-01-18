@@ -42,6 +42,14 @@ TOOL_KEYS=(gamemode mangohud goverlay protonge wine winetricks dxvk vkbasalt cor
 declare -A OPTIMIZATIONS
 OPTIMIZATION_KEYS=(cpu_governor swappiness io_scheduler)
 
+# Performance Tweaks (Advanced)
+declare -A PERFORMANCE_TWEAKS
+PERFORMANCE_KEYS=(gaming_kernel zram max_map_count file_limits)
+
+# Quality of Life settings
+declare -A QOL
+QOL_KEYS=(controller_support pipewire_lowlatency shader_cache proton_tricks)
+
 # Mode (install or uninstall)
 OPERATION_MODE="install"
 
@@ -65,7 +73,7 @@ print_banner() {
     echo "  ║   ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗                      ║"
     echo "  ║   ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝                      ║"
     echo "  ║                                                               ║"
-    echo "  ║        GAME LAUNCHER INSTALLER v0.3                           ║"
+    echo "  ║        GAME LAUNCHER INSTALLER v0.4                           ║"
     echo "  ║                                                               ║"
     echo "  ║                    Created by Toppzi                          ║"
     echo "  ║                                                               ║"
@@ -811,6 +819,336 @@ ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue
     fi
 }
 
+# ============================================================================
+# PERFORMANCE TWEAKS (ADVANCED)
+# ============================================================================
+
+performance_tweaks_menu() {
+    local choice
+    while true; do
+        print_banner
+        show_system_info
+        
+        echo -e "${CYAN}══════════════════════════════════════════${NC}"
+        echo -e "${RED}   PERFORMANCE TWEAKS (ADVANCED USERS)    ${NC}"
+        echo -e "${CYAN}══════════════════════════════════════════${NC}"
+        echo ""
+        echo -e "  ${RED}WARNING: These options modify system settings.${NC}"
+        echo -e "  ${RED}Improper use may cause system instability.${NC}"
+        echo -e "  ${YELLOW}Only proceed if you understand the changes.${NC}"
+        echo ""
+        echo -e "  1) $(show_checkbox "${PERFORMANCE_TWEAKS[gaming_kernel]}")  Gaming Kernel      - Install linux-zen/xanmod kernel"
+        echo -e "  2) $(show_checkbox "${PERFORMANCE_TWEAKS[zram]}")  ZRAM               - Compressed swap (saves RAM)"
+        echo -e "  3) $(show_checkbox "${PERFORMANCE_TWEAKS[max_map_count]}")  vm.max_map_count   - Increase for demanding games"
+        echo -e "  4) $(show_checkbox "${PERFORMANCE_TWEAKS[file_limits]}")  File Limits        - Raise ulimits for games"
+        echo ""
+        echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
+        echo -e "  ${GREEN}c) Continue to Quality of Life${NC}"
+        echo -e "  ${YELLOW}b) Back to Optimizations${NC}"
+        echo -e "  ${RED}q) Quit${NC}"
+        echo ""
+        read -rp "  Enter choice: " choice
+        
+        case "$choice" in
+            1) toggle_selection PERFORMANCE_TWEAKS gaming_kernel ;;
+            2) toggle_selection PERFORMANCE_TWEAKS zram ;;
+            3) toggle_selection PERFORMANCE_TWEAKS max_map_count ;;
+            4) toggle_selection PERFORMANCE_TWEAKS file_limits ;;
+            a|A)
+                for key in "${PERFORMANCE_KEYS[@]}"; do
+                    PERFORMANCE_TWEAKS[$key]="1"
+                done
+                ;;
+            n|N)
+                for key in "${PERFORMANCE_KEYS[@]}"; do
+                    PERFORMANCE_TWEAKS[$key]="0"
+                done
+                ;;
+            c|C) return 0 ;;
+            b|B) return 1 ;;
+            q|Q) exit 0 ;;
+        esac
+    done
+}
+
+apply_performance_tweaks() {
+    local applied=false
+    
+    # Gaming Kernel
+    if [[ "${PERFORMANCE_TWEAKS[gaming_kernel]}" == "1" ]]; then
+        print_info "Installing gaming-optimized kernel..."
+        
+        case "$DISTRO_FAMILY" in
+            arch)
+                if check_aur_helper; then
+                    "$AUR_HELPER" -S --noconfirm linux-zen linux-zen-headers 2>/dev/null || \
+                    "$AUR_HELPER" -S --noconfirm linux-xanmod linux-xanmod-headers 2>/dev/null || true
+                else
+                    sudo pacman -S --noconfirm linux-zen linux-zen-headers || true
+                fi
+                print_success "Installed linux-zen kernel (reboot to use)"
+                ;;
+            fedora)
+                # Fedora doesn't have zen in repos, suggest nobara or manual
+                print_warning "For gaming kernels on Fedora, consider Nobara or manual Xanmod install"
+                print_info "See: https://xanmod.org for Fedora instructions"
+                ;;
+            debian)
+                print_info "Adding Xanmod repository..."
+                wget -qO - https://dl.xanmod.org/archive.key | sudo gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg 2>/dev/null || true
+                echo 'deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main' | \
+                    sudo tee /etc/apt/sources.list.d/xanmod-release.list > /dev/null
+                sudo apt-get update
+                sudo apt-get install -y linux-xanmod-x64v3 || sudo apt-get install -y linux-xanmod || true
+                print_success "Installed Xanmod kernel (reboot to use)"
+                ;;
+            opensuse)
+                print_warning "Gaming kernels on openSUSE require manual installation"
+                print_info "Consider using Tumbleweed for latest kernel updates"
+                ;;
+        esac
+        applied=true
+    fi
+    
+    # ZRAM
+    if [[ "${PERFORMANCE_TWEAKS[zram]}" == "1" ]]; then
+        print_info "Configuring ZRAM compressed swap..."
+        
+        case "$DISTRO_FAMILY" in
+            arch)
+                sudo pacman -S --noconfirm zram-generator || true
+                ;;
+            fedora)
+                # Fedora has zram by default, just ensure it's configured
+                print_info "Fedora has ZRAM enabled by default"
+                ;;
+            debian)
+                sudo apt-get install -y zram-tools || true
+                ;;
+            opensuse)
+                sudo zypper install -y zram || true
+                ;;
+        esac
+        
+        # Create zram config
+        if [[ -d /etc/systemd/zram-generator.conf.d ]] || [[ "$DISTRO_FAMILY" == "arch" ]]; then
+            sudo mkdir -p /etc/systemd/zram-generator.conf.d
+            cat << 'EOF' | sudo tee /etc/systemd/zram-generator.conf.d/gaming.conf > /dev/null
+[zram0]
+zram-size = ram / 2
+compression-algorithm = zstd
+EOF
+        fi
+        
+        print_success "ZRAM configured (reboot to activate)"
+        applied=true
+    fi
+    
+    # vm.max_map_count
+    if [[ "${PERFORMANCE_TWEAKS[max_map_count]}" == "1" ]]; then
+        print_info "Increasing vm.max_map_count for games..."
+        
+        # Apply immediately
+        sudo sysctl -w vm.max_map_count=2147483642 > /dev/null 2>&1 || true
+        
+        # Make persistent
+        echo "vm.max_map_count=2147483642" | sudo tee /etc/sysctl.d/99-max-map-count.conf > /dev/null
+        
+        print_success "vm.max_map_count set to 2147483642 (Steam Deck value)"
+        applied=true
+    fi
+    
+    # File Limits
+    if [[ "${PERFORMANCE_TWEAKS[file_limits]}" == "1" ]]; then
+        print_info "Raising file descriptor limits..."
+        
+        # Create limits config
+        cat << 'EOF' | sudo tee /etc/security/limits.d/99-gaming.conf > /dev/null
+# Gaming file limits
+*               soft    nofile          1048576
+*               hard    nofile          1048576
+*               soft    memlock         unlimited
+*               hard    memlock         unlimited
+EOF
+        
+        print_success "File limits raised (re-login to apply)"
+        applied=true
+    fi
+    
+    if [[ "$applied" == true ]]; then
+        echo ""
+    fi
+}
+
+# ============================================================================
+# QUALITY OF LIFE
+# ============================================================================
+
+qol_menu() {
+    local choice
+    while true; do
+        print_banner
+        show_system_info
+        
+        echo -e "${CYAN}══════════════════════════════════════════${NC}"
+        echo -e "${CYAN}         QUALITY OF LIFE                  ${NC}"
+        echo -e "${CYAN}══════════════════════════════════════════${NC}"
+        echo ""
+        echo -e "  1) $(show_checkbox "${QOL[controller_support]}")  Controller Support   - Xbox/PlayStation controller drivers"
+        echo -e "  2) $(show_checkbox "${QOL[pipewire_lowlatency]}")  Low-Latency Audio    - PipeWire gaming configuration"
+        echo -e "  3) $(show_checkbox "${QOL[shader_cache]}")  Shader Cache Setup   - Configure Mesa/Steam shader cache"
+        echo -e "  4) $(show_checkbox "${QOL[proton_tricks]}")  Protontricks         - Winetricks for Proton games"
+        echo ""
+        echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
+        echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
+        echo -e "  ${YELLOW}b) Back to Performance Tweaks${NC}"
+        echo -e "  ${RED}q) Quit${NC}"
+        echo ""
+        read -rp "  Enter choice: " choice
+        
+        case "$choice" in
+            1) toggle_selection QOL controller_support ;;
+            2) toggle_selection QOL pipewire_lowlatency ;;
+            3) toggle_selection QOL shader_cache ;;
+            4) toggle_selection QOL proton_tricks ;;
+            a|A)
+                for key in "${QOL_KEYS[@]}"; do
+                    QOL[$key]="1"
+                done
+                ;;
+            n|N)
+                for key in "${QOL_KEYS[@]}"; do
+                    QOL[$key]="0"
+                done
+                ;;
+            c|C) return 0 ;;
+            b|B) return 1 ;;
+            q|Q) exit 0 ;;
+        esac
+    done
+}
+
+apply_qol() {
+    local applied=false
+    
+    # Controller Support
+    if [[ "${QOL[controller_support]}" == "1" ]]; then
+        print_info "Installing controller support..."
+        
+        case "$DISTRO_FAMILY" in
+            arch)
+                sudo pacman -S --noconfirm game-devices-udev || true
+                if check_aur_helper; then
+                    "$AUR_HELPER" -S --noconfirm xpadneo-dkms || true
+                fi
+                ;;
+            fedora)
+                sudo dnf install -y game-device-udev-rules || true
+                # Xbox wireless adapter
+                sudo dnf copr enable sentry/xone -y 2>/dev/null || true
+                sudo dnf install -y xone-dkms 2>/dev/null || true
+                ;;
+            debian)
+                # ds4drv for PlayStation, xpadneo for Xbox
+                sudo apt-get install -y dkms || true
+                # Add xpadneo
+                if [[ ! -d /usr/src/xpadneo-* ]]; then
+                    git clone https://github.com/atar-axis/xpadneo.git /tmp/xpadneo 2>/dev/null || true
+                    if [[ -d /tmp/xpadneo ]]; then
+                        cd /tmp/xpadneo && sudo ./install.sh 2>/dev/null || true
+                        cd - > /dev/null
+                    fi
+                fi
+                ;;
+            opensuse)
+                sudo zypper install -y game-device-udev-rules 2>/dev/null || true
+                ;;
+        esac
+        
+        print_success "Controller support installed"
+        applied=true
+    fi
+    
+    # PipeWire Low Latency
+    if [[ "${QOL[pipewire_lowlatency]}" == "1" ]]; then
+        print_info "Configuring PipeWire for low-latency gaming..."
+        
+        # Ensure PipeWire is installed
+        case "$DISTRO_FAMILY" in
+            arch)
+                sudo pacman -S --noconfirm pipewire pipewire-pulse pipewire-alsa wireplumber || true
+                ;;
+            fedora)
+                # Fedora uses PipeWire by default
+                ;;
+            debian)
+                sudo apt-get install -y pipewire pipewire-pulse pipewire-audio-client-libraries wireplumber || true
+                ;;
+            opensuse)
+                sudo zypper install -y pipewire pipewire-pulseaudio wireplumber || true
+                ;;
+        esac
+        
+        # Create low-latency config
+        mkdir -p ~/.config/pipewire/pipewire.conf.d
+        cat << 'EOF' > ~/.config/pipewire/pipewire.conf.d/99-gaming.conf
+# Low-latency gaming configuration
+context.properties = {
+    default.clock.rate = 48000
+    default.clock.quantum = 256
+    default.clock.min-quantum = 256
+}
+EOF
+        
+        print_success "PipeWire configured for low latency"
+        applied=true
+    fi
+    
+    # Shader Cache
+    if [[ "${QOL[shader_cache]}" == "1" ]]; then
+        print_info "Configuring shader cache directories..."
+        
+        # Create shader cache directories
+        mkdir -p ~/.cache/mesa_shader_cache
+        mkdir -p ~/.cache/nvidia/GLCache
+        mkdir -p ~/.local/share/Steam/steamapps/shadercache
+        
+        # Add to environment
+        if ! grep -q "MESA_SHADER_CACHE_DIR" ~/.profile 2>/dev/null; then
+            echo 'export MESA_SHADER_CACHE_DIR="$HOME/.cache/mesa_shader_cache"' >> ~/.profile
+            echo 'export MESA_SHADER_CACHE_MAX_SIZE=10G' >> ~/.profile
+        fi
+        
+        print_success "Shader cache directories configured"
+        applied=true
+    fi
+    
+    # Protontricks
+    if [[ "${QOL[proton_tricks]}" == "1" ]]; then
+        print_info "Installing Protontricks..."
+        
+        case "$DISTRO_FAMILY" in
+            arch)
+                sudo pacman -S --noconfirm protontricks || true
+                ;;
+            fedora)
+                sudo dnf install -y protontricks || true
+                ;;
+            debian|opensuse)
+                # Install via Flatpak
+                flatpak install -y flathub com.github.Matoking.protontricks 2>/dev/null || true
+                ;;
+        esac
+        
+        print_success "Protontricks installed"
+        applied=true
+    fi
+    
+    if [[ "$applied" == true ]]; then
+        echo ""
+    fi
+}
+
 apply_mount_configs() {
     if [[ ${#MOUNT_CONFIGS[@]} -eq 0 ]]; then
         return 0
@@ -935,6 +1273,30 @@ review_menu() {
         fi
     done
     [[ "$has_opt" == false ]] && echo "    (none selected)"
+    
+    echo ""
+    echo -e "  ${RED}Performance Tweaks (Advanced):${NC}"
+    local has_perf=false
+    for key in "${PERFORMANCE_KEYS[@]}"; do
+        if [[ "${PERFORMANCE_TWEAKS[$key]}" == "1" ]]; then
+            echo "    - $key"
+            has_selection=true
+            has_perf=true
+        fi
+    done
+    [[ "$has_perf" == false ]] && echo "    (none selected)"
+    
+    echo ""
+    echo -e "  ${GREEN}Quality of Life:${NC}"
+    local has_qol=false
+    for key in "${QOL_KEYS[@]}"; do
+        if [[ "${QOL[$key]}" == "1" ]]; then
+            echo "    - $key"
+            has_selection=true
+            has_qol=true
+        fi
+    done
+    [[ "$has_qol" == false ]] && echo "    (none selected)"
     
     echo ""
     echo -e "  ${GREEN}Drive Mounts:${NC}"
@@ -1463,6 +1825,12 @@ run_installation() {
     # Apply system optimizations
     apply_optimizations
     
+    # Apply performance tweaks
+    apply_performance_tweaks
+    
+    # Apply quality of life settings
+    apply_qol
+    
     # Apply drive mount configurations
     apply_mount_configs
     
@@ -1703,16 +2071,30 @@ main() {
                 ;;
             optimization)
                 if optimization_menu; then
-                    current_menu="drives"
+                    current_menu="performance"
                 else
                     current_menu="tools"
+                fi
+                ;;
+            performance)
+                if performance_tweaks_menu; then
+                    current_menu="qol"
+                else
+                    current_menu="optimization"
+                fi
+                ;;
+            qol)
+                if qol_menu; then
+                    current_menu="drives"
+                else
+                    current_menu="performance"
                 fi
                 ;;
             drives)
                 if drives_menu; then
                     current_menu="review"
                 else
-                    current_menu="optimization"
+                    current_menu="qol"
                 fi
                 ;;
             review)
