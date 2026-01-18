@@ -108,7 +108,21 @@ OPTIMIZATIONS = {
     'io_scheduler': {'name': 'I/O Scheduler', 'desc': 'Optimize disk I/O for gaming'},
 }
 
-VERSION = "0.3"
+PERFORMANCE_TWEAKS = {
+    'gaming_kernel': {'name': 'Gaming Kernel', 'desc': 'Install linux-zen/xanmod kernel'},
+    'zram': {'name': 'ZRAM', 'desc': 'Compressed swap (saves RAM)'},
+    'max_map_count': {'name': 'vm.max_map_count', 'desc': 'Increase for demanding games'},
+    'file_limits': {'name': 'File Limits', 'desc': 'Raise ulimits for games'},
+}
+
+QOL = {
+    'controller_support': {'name': 'Controller Support', 'desc': 'Xbox/PlayStation controller drivers'},
+    'pipewire_lowlatency': {'name': 'Low-Latency Audio', 'desc': 'PipeWire gaming configuration'},
+    'shader_cache': {'name': 'Shader Cache Setup', 'desc': 'Configure Mesa/Steam shader cache'},
+    'proton_tricks': {'name': 'Protontricks', 'desc': 'Winetricks for Proton games'},
+}
+
+VERSION = "0.4"
 UPDATE_URL = "https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller-gui.py"
 
 
@@ -740,6 +754,130 @@ class InstallationManager:
                 use_sudo=True
             )
             
+    def apply_performance_tweaks(self, selections):
+        """Apply advanced performance tweaks"""
+        self.log(f"\n{'='*60}")
+        self.log("Applying Performance Tweaks (Advanced)")
+        self.log(f"{'='*60}\n")
+        
+        # Gaming kernel
+        if selections.get('gaming_kernel'):
+            self.log("[+] Installing gaming-optimized kernel...")
+            if self.system.distro_family == 'arch':
+                self.run_command("pacman -S --noconfirm linux-zen linux-zen-headers", use_sudo=True)
+                self.log("[+] Installed linux-zen kernel (reboot to use)")
+            elif self.system.distro_family == 'debian':
+                self.log("[+] Adding Xanmod repository...")
+                self.run_command("wget -qO - https://dl.xanmod.org/archive.key | gpg --dearmor -o /usr/share/keyrings/xanmod-archive-keyring.gpg", use_sudo=True)
+                self.run_command("echo 'deb [signed-by=/usr/share/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org releases main' > /etc/apt/sources.list.d/xanmod-release.list", use_sudo=True)
+                self.run_command("apt-get update", use_sudo=True)
+                self.run_command("apt-get install -y linux-xanmod", use_sudo=True)
+            elif self.system.distro_family == 'fedora':
+                self.log("[!] For gaming kernels on Fedora, consider Nobara or manual Xanmod install")
+            elif self.system.distro_family == 'opensuse':
+                self.log("[!] Gaming kernels on openSUSE require manual installation")
+                
+        # ZRAM
+        if selections.get('zram'):
+            self.log("[+] Configuring ZRAM compressed swap...")
+            if self.system.distro_family == 'arch':
+                self.run_command("pacman -S --noconfirm zram-generator", use_sudo=True)
+            elif self.system.distro_family == 'debian':
+                self.run_command("apt-get install -y zram-tools", use_sudo=True)
+            elif self.system.distro_family == 'fedora':
+                self.log("[+] Fedora has ZRAM enabled by default")
+            elif self.system.distro_family == 'opensuse':
+                self.run_command("zypper install -y zram", use_sudo=True)
+            
+            # Create zram config
+            self.run_command("mkdir -p /etc/systemd/zram-generator.conf.d", use_sudo=True)
+            self.run_command("echo '[zram0]\nzram-size = ram / 2\ncompression-algorithm = zstd' > /etc/systemd/zram-generator.conf.d/gaming.conf", use_sudo=True)
+            self.log("[+] ZRAM configured (reboot to activate)")
+            
+        # vm.max_map_count
+        if selections.get('max_map_count'):
+            self.log("[+] Increasing vm.max_map_count for games...")
+            self.run_command("sysctl -w vm.max_map_count=2147483642", use_sudo=True)
+            self.run_command("echo 'vm.max_map_count=2147483642' > /etc/sysctl.d/99-max-map-count.conf", use_sudo=True)
+            self.log("[+] vm.max_map_count set to 2147483642 (Steam Deck value)")
+            
+        # File limits
+        if selections.get('file_limits'):
+            self.log("[+] Raising file descriptor limits...")
+            limits_config = "*               soft    nofile          1048576\n*               hard    nofile          1048576\n*               soft    memlock         unlimited\n*               hard    memlock         unlimited"
+            self.run_command(f"echo '{limits_config}' > /etc/security/limits.d/99-gaming.conf", use_sudo=True)
+            self.log("[+] File limits raised (re-login to apply)")
+            
+    def apply_qol(self, selections):
+        """Apply quality of life improvements"""
+        self.log(f"\n{'='*60}")
+        self.log("Applying Quality of Life Improvements")
+        self.log(f"{'='*60}\n")
+        
+        # Controller support
+        if selections.get('controller_support'):
+            self.log("[+] Installing controller support...")
+            if self.system.distro_family == 'arch':
+                self.run_command("pacman -S --noconfirm game-devices-udev", use_sudo=True)
+            elif self.system.distro_family == 'fedora':
+                self.run_command("dnf install -y game-device-udev-rules", use_sudo=True)
+            elif self.system.distro_family == 'debian':
+                self.run_command("apt-get install -y dkms", use_sudo=True)
+            elif self.system.distro_family == 'opensuse':
+                self.run_command("zypper install -y game-device-udev-rules", use_sudo=True)
+            self.log("[+] Controller support installed")
+            
+        # PipeWire low latency
+        if selections.get('pipewire_lowlatency'):
+            self.log("[+] Configuring PipeWire for low-latency gaming...")
+            if self.system.distro_family == 'arch':
+                self.run_command("pacman -S --noconfirm pipewire pipewire-pulse pipewire-alsa wireplumber", use_sudo=True)
+            elif self.system.distro_family == 'debian':
+                self.run_command("apt-get install -y pipewire pipewire-pulse wireplumber", use_sudo=True)
+            elif self.system.distro_family == 'opensuse':
+                self.run_command("zypper install -y pipewire pipewire-pulseaudio wireplumber", use_sudo=True)
+            
+            # Create low-latency config in user's home
+            home = os.path.expanduser("~")
+            config_dir = f"{home}/.config/pipewire/pipewire.conf.d"
+            os.makedirs(config_dir, exist_ok=True)
+            config_content = '''# Low-latency gaming configuration
+context.properties = {
+    default.clock.rate = 48000
+    default.clock.quantum = 256
+    default.clock.min-quantum = 256
+}'''
+            with open(f"{config_dir}/99-gaming.conf", 'w') as f:
+                f.write(config_content)
+            self.log("[+] PipeWire configured for low latency")
+            
+        # Shader cache
+        if selections.get('shader_cache'):
+            self.log("[+] Configuring shader cache directories...")
+            home = os.path.expanduser("~")
+            os.makedirs(f"{home}/.cache/mesa_shader_cache", exist_ok=True)
+            os.makedirs(f"{home}/.cache/nvidia/GLCache", exist_ok=True)
+            os.makedirs(f"{home}/.local/share/Steam/steamapps/shadercache", exist_ok=True)
+            
+            # Add to profile
+            profile_path = f"{home}/.profile"
+            with open(profile_path, 'a') as f:
+                f.write('\n# Gaming shader cache\n')
+                f.write('export MESA_SHADER_CACHE_DIR="$HOME/.cache/mesa_shader_cache"\n')
+                f.write('export MESA_SHADER_CACHE_MAX_SIZE=10G\n')
+            self.log("[+] Shader cache directories configured")
+            
+        # Protontricks
+        if selections.get('proton_tricks'):
+            self.log("[+] Installing Protontricks...")
+            if self.system.distro_family == 'arch':
+                self.run_command("pacman -S --noconfirm protontricks", use_sudo=True)
+            elif self.system.distro_family == 'fedora':
+                self.run_command("dnf install -y protontricks", use_sudo=True)
+            else:
+                self.run_command("flatpak install -y flathub com.github.Matoking.protontricks", use_sudo=False)
+            self.log("[+] Protontricks installed")
+            
     def uninstall_packages(self, selections):
         """Uninstall selected packages"""
         self.log(f"\n{'='*60}")
@@ -979,6 +1117,8 @@ class GameInstallerGUI:
         self.driver_vars = {}
         self.tool_vars = {}
         self.optimization_vars = {}
+        self.performance_vars = {}
+        self.qol_vars = {}
         self.mount_configs = []
         self.operation_mode = 'install'  # 'install' or 'uninstall'
         
@@ -1057,6 +1197,8 @@ class GameInstallerGUI:
         self.build_driver_tab()
         self.build_tools_tab()
         self.build_optimization_tab()
+        self.build_performance_tab()
+        self.build_qol_tab()
         self.build_drives_tab()
         self.build_install_tab()
         
@@ -1208,6 +1350,64 @@ class GameInstallerGUI:
             card.grid(row=i, column=0, padx=5, pady=5, sticky='nsew')
             
         grid_frame.columnconfigure(0, weight=1)
+        
+    def build_performance_tab(self):
+        """Build advanced performance tweaks tab"""
+        frame = ttk.Frame(self.notebook)
+        self.notebook.add(frame, text="  Advanced  ")
+        
+        # Header with warning
+        header = ttk.Label(frame, text="Performance Tweaks (Advanced Users)", style='Header.TLabel')
+        header.pack(anchor=tk.W, padx=20, pady=(20, 10))
+        
+        # Warning label
+        warning_frame = ttk.Frame(frame, style='Card.TFrame')
+        warning_frame.pack(fill=tk.X, padx=20, pady=(0, 10))
+        
+        warning = tk.Label(warning_frame, 
+                          text="WARNING: These options modify system settings.\nImproper use may cause system instability. Only proceed if you understand the changes.",
+                          bg=COLORS['accent'], fg=COLORS['text'], 
+                          font=('Helvetica', 10, 'bold'), padx=15, pady=10)
+        warning.pack(fill=tk.X)
+        
+        # Grid of performance tweaks
+        grid_frame = ttk.Frame(frame)
+        grid_frame.pack(fill=tk.BOTH, expand=True, padx=20)
+        
+        for i, (key, info) in enumerate(PERFORMANCE_TWEAKS.items()):
+            self.performance_vars[key] = tk.BooleanVar()
+            card = self.create_checkbox_card(grid_frame, key, info['name'], info['desc'],
+                                            self.performance_vars[key])
+            card.grid(row=i//2, column=i%2, padx=5, pady=5, sticky='nsew')
+            
+        grid_frame.columnconfigure(0, weight=1)
+        grid_frame.columnconfigure(1, weight=1)
+        
+    def build_qol_tab(self):
+        """Build quality of life tab"""
+        frame = ttk.Frame(self.notebook)
+        self.notebook.add(frame, text="  Quality of Life  ")
+        
+        # Header
+        header = ttk.Label(frame, text="Quality of Life", style='Header.TLabel')
+        header.pack(anchor=tk.W, padx=20, pady=(20, 10))
+        
+        desc = ttk.Label(frame, text="Convenience features to improve your gaming experience", 
+                        foreground=COLORS['text_secondary'])
+        desc.pack(anchor=tk.W, padx=20, pady=(0, 20))
+        
+        # Grid of QoL options
+        grid_frame = ttk.Frame(frame)
+        grid_frame.pack(fill=tk.BOTH, expand=True, padx=20)
+        
+        for i, (key, info) in enumerate(QOL.items()):
+            self.qol_vars[key] = tk.BooleanVar()
+            card = self.create_checkbox_card(grid_frame, key, info['name'], info['desc'],
+                                            self.qol_vars[key])
+            card.grid(row=i//2, column=i%2, padx=5, pady=5, sticky='nsew')
+            
+        grid_frame.columnconfigure(0, weight=1)
+        grid_frame.columnconfigure(1, weight=1)
         
     def build_drives_tab(self):
         """Build drive mounting tab"""
@@ -1459,6 +1659,10 @@ class GameInstallerGUI:
             selections[key] = var.get()
         for key, var in self.optimization_vars.items():
             selections[key] = var.get()
+        for key, var in self.performance_vars.items():
+            selections[key] = var.get()
+        for key, var in self.qol_vars.items():
+            selections[key] = var.get()
         return selections
         
     def log_output(self, message):
@@ -1493,7 +1697,7 @@ class GameInstallerGUI:
             return
             
         # Switch to install tab
-        self.notebook.select(5)  # Updated index due to new optimization tab
+        self.notebook.select(7)  # Updated index due to new tabs
         
         # Disable install button
         self.install_btn.config(state='disabled')
@@ -1511,6 +1715,8 @@ class GameInstallerGUI:
                 if self.operation_mode == 'install':
                     self.installer.install_packages(selections)
                     self.installer.apply_optimizations(selections)
+                    self.installer.apply_performance_tweaks(selections)
+                    self.installer.apply_qol(selections)
                     self.installer.apply_mount_configs()
                     self.log_output("\n" + "="*60)
                     self.log_output("INSTALLATION COMPLETE!")
