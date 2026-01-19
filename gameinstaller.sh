@@ -466,31 +466,46 @@ tools_menu() {
 detect_drives() {
     AVAILABLE_DRIVES=()
     
-    # Get list of block devices that are not mounted and not the root device
-    local root_device
-    root_device=$(findmnt -n -o SOURCE / 2>/dev/null | sed 's/[0-9]*$//' | xargs basename 2>/dev/null) || true
-    
+    # Get list of partitions using lsblk with proper field separation
+    # Use -P for key=value pairs which handles empty fields correctly
     while IFS= read -r line; do
-        local name size type mountpoint fstype
-        name=$(echo "$line" | awk '{print $1}')
-        size=$(echo "$line" | awk '{print $2}')
-        type=$(echo "$line" | awk '{print $3}')
-        mountpoint=$(echo "$line" | awk '{print $4}')
-        fstype=$(echo "$line" | awk '{print $5}')
+        # Parse key="value" format
+        local name="" size="" type="" mountpoint="" fstype=""
         
-        # Skip if it's a loop device, rom, or already mounted
-        [[ "$type" == "loop" || "$type" == "rom" ]] && continue
-        [[ -n "$mountpoint" && "$mountpoint" != "" ]] && continue
+        # Extract values using parameter expansion
+        if [[ "$line" =~ NAME=\"([^\"]*)\" ]]; then name="${BASH_REMATCH[1]}"; fi
+        if [[ "$line" =~ SIZE=\"([^\"]*)\" ]]; then size="${BASH_REMATCH[1]}"; fi
+        if [[ "$line" =~ TYPE=\"([^\"]*)\" ]]; then type="${BASH_REMATCH[1]}"; fi
+        if [[ "$line" =~ MOUNTPOINT=\"([^\"]*)\" ]]; then mountpoint="${BASH_REMATCH[1]}"; fi
+        if [[ "$line" =~ MOUNTPOINTS=\"([^\"]*)\" ]]; then mountpoint="${BASH_REMATCH[1]}"; fi
+        if [[ "$line" =~ FSTYPE=\"([^\"]*)\" ]]; then fstype="${BASH_REMATCH[1]}"; fi
         
-        # Skip if no filesystem
-        [[ -z "$fstype" || "$fstype" == "" ]] && continue
+        # Skip if empty name
+        [[ -z "$name" ]] && continue
         
-        # Skip root device partitions that are swap
+        # Only include partitions (type=part)
+        [[ "$type" != "part" ]] && continue
+        
+        # Skip if already mounted
+        [[ -n "$mountpoint" ]] && continue
+        
+        # Skip swap partitions
         [[ "$fstype" == "swap" ]] && continue
+        
+        # If no fstype detected by lsblk, try blkid
+        if [[ -z "$fstype" ]]; then
+            fstype=$(blkid -s TYPE -o value "/dev/$name" 2>/dev/null) || true
+        fi
+        
+        # Skip if still no filesystem (unformatted)
+        [[ -z "$fstype" ]] && continue
+        
+        # Skip extended partition types
+        [[ "$fstype" == "Extended" ]] && continue
         
         # Add to available drives
         AVAILABLE_DRIVES+=("$name|$size|$fstype")
-    done < <(lsblk -rno NAME,SIZE,TYPE,MOUNTPOINT,FSTYPE 2>/dev/null || true)
+    done < <(lsblk -Pno NAME,SIZE,TYPE,MOUNTPOINT,MOUNTPOINTS,FSTYPE 2>/dev/null || lsblk -Pno NAME,SIZE,TYPE,MOUNTPOINT,FSTYPE 2>/dev/null || true)
 }
 
 get_drive_uuid() {
