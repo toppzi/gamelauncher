@@ -91,16 +91,18 @@ Created by **Toppzi**
 
 ### Quick Start (Terminal Version)
 
-```bash
+
 # Download the script
+```bash
 curl -O https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller.sh
 ```
-```bash
+
 # Make it executable
+```bash
 chmod +x gameinstaller.sh
 ```
-```bash
 # Run it
+```bash
 ./gameinstaller.sh
 ```
 
@@ -108,14 +110,17 @@ chmod +x gameinstaller.sh
 
 The graphical version uses Python with Tkinter.
 
-```bash
+
 # Download the GUI script
+```bash
 curl -O https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller-gui.py
-
+```
 # Make it executable
+```bash
 chmod +x gameinstaller-gui.py
-
+```
 # Run it
+```bash
 ./gameinstaller-gui.py
 ```
 
