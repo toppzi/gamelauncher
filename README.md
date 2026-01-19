@@ -91,6 +91,7 @@ Created by **Toppzi**
 
 ### Quick Start
 
+
 # Download the script
 ```bash
 curl -O https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller.sh
@@ -109,26 +110,27 @@ chmod +x gameinstaller.sh
 1. Run the script in your terminal
 2. Select mode: **Install**, **Uninstall**, or **Update Check**
 3. The script will detect your distro and GPU automatically
-4. Select game launchers you want to install/uninstall
-5. Select graphics drivers (based on your GPU)
-6. Select additional gaming tools
-7. Configure system optimizations (install mode only)
-8. Configure performance tweaks (advanced users)
-9. Configure quality of life features
-10. Configure drive mounts (optional - for game library drives)
-11. Review your selections
-12. Confirm to start the operation
+4. Use the **Main Menu** to jump to any category you want to configure:
+   - Game Launchers
+   - Graphics Drivers
+   - Gaming Tools
+   - System Optimizations
+   - Performance Tweaks (advanced)
+   - Quality of Life
+   - Drive Mounting
+5. Press `r` from Main Menu to **Review & Install** your selections
+6. Confirm to start the operation
 
 ### Navigation
 
 | Key | Action |
 |-----|--------|
-| `1-9` | Toggle selection / Select drive |
-| `a` | Select all |
-| `n` | Select none |
-| `r` | Remove configured mount (in drive menu) |
-| `c` | Continue to next menu |
-| `b` | Go back |
+| `1-9` | Toggle selection / Select category |
+| `a` | Select all (in category menus) |
+| `n` | Select none (in category menus) |
+| `r` | Review & Install (main menu) / Remove mount (drive menu) |
+| `b` | Back to Main Menu |
+| `m` | Change mode (Install/Uninstall) |
 | `q` | Quit |
 
 ## Screenshots
@@ -175,10 +177,10 @@ chmod +x gameinstaller.sh
 ## Changelog
 
 ### v0.4
+- **New category-based navigation** - jump directly to any section from Main Menu
 - Added Performance Tweaks menu with advanced options (gaming kernels, ZRAM, vm.max_map_count, file limits)
 - Added Quality of Life menu (controller support, low-latency audio, shader cache, Protontricks)
 - Added warning labels for advanced options
-- Improved menu navigation flow
 - Fixed drive detection for unmounted partitions
 
 ### v0.3
