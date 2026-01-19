@@ -212,40 +212,71 @@ class SystemInfo:
         """Detect unmounted drives"""
         self.drives = []
         try:
-            # Get block devices
+            # Get block devices using -P for key=value pairs (handles empty fields correctly)
             result = subprocess.run(
-                ['lsblk', '-o', 'NAME,SIZE,FSTYPE,UUID,LABEL,MOUNTPOINT', '-n', '-l'],
+                ['lsblk', '-Pno', 'NAME,SIZE,TYPE,FSTYPE,UUID,LABEL,MOUNTPOINT,MOUNTPOINTS'],
                 capture_output=True, text=True
             )
+            
+            # Fallback for older lsblk without MOUNTPOINTS
+            if result.returncode != 0:
+                result = subprocess.run(
+                    ['lsblk', '-Pno', 'NAME,SIZE,TYPE,FSTYPE,UUID,LABEL,MOUNTPOINT'],
+                    capture_output=True, text=True
+                )
             
             for line in result.stdout.strip().split('\n'):
                 if not line.strip():
                     continue
+                
+                # Parse key="value" format
+                import re
+                fields = {}
+                for match in re.finditer(r'(\w+)="([^"]*)"', line):
+                    fields[match.group(1)] = match.group(2)
+                
+                name = fields.get('NAME', '')
+                size = fields.get('SIZE', '')
+                device_type = fields.get('TYPE', '')
+                fstype = fields.get('FSTYPE', '')
+                uuid = fields.get('UUID', '')
+                label = fields.get('LABEL', '')
+                mountpoint = fields.get('MOUNTPOINT', '') or fields.get('MOUNTPOINTS', '')
+                
+                # Only include partitions
+                if device_type != 'part':
+                    continue
+                
+                # Skip if already mounted
+                if mountpoint:
+                    continue
+                
+                # If no fstype from lsblk, try blkid
+                if not fstype and name:
+                    try:
+                        blkid_result = subprocess.run(
+                            ['blkid', '-s', 'TYPE', '-o', 'value', f'/dev/{name}'],
+                            capture_output=True, text=True
+                        )
+                        fstype = blkid_result.stdout.strip()
+                    except:
+                        pass
+                
+                # Skip if no filesystem
+                if not fstype:
+                    continue
                     
-                parts = line.split()
-                if len(parts) >= 2:
-                    name = parts[0]
-                    size = parts[1] if len(parts) > 1 else ''
-                    fstype = parts[2] if len(parts) > 2 else ''
-                    uuid = parts[3] if len(parts) > 3 else ''
-                    label = parts[4] if len(parts) > 4 else ''
-                    mountpoint = parts[5] if len(parts) > 5 else ''
+                # Skip certain partitions
+                if fstype in ['swap', 'linux_raid_member', 'LVM2_member', 'Extended']:
+                    continue
                     
-                    # Skip if already mounted or no filesystem
-                    if mountpoint or not fstype:
-                        continue
-                        
-                    # Skip certain partitions
-                    if fstype in ['swap', 'linux_raid_member', 'LVM2_member']:
-                        continue
-                        
-                    self.drives.append({
-                        'device': f'/dev/{name}',
-                        'size': size,
-                        'fstype': fstype,
-                        'uuid': uuid,
-                        'label': label
-                    })
+                self.drives.append({
+                    'device': f'/dev/{name}',
+                    'size': size,
+                    'fstype': fstype,
+                    'uuid': uuid,
+                    'label': label
+                })
                     
         except Exception as e:
             print(f"Error detecting drives: {e}")
