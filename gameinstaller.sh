@@ -1985,42 +1985,45 @@ init_selections() {
 
 mode_menu() {
     local choice
-    print_banner
-    show_system_info
     
-    echo -e "${CYAN}══════════════════════════════════════════${NC}"
-    echo -e "${CYAN}           SELECT MODE                    ${NC}"
-    echo -e "${CYAN}══════════════════════════════════════════${NC}"
-    echo ""
-    echo "  What would you like to do?"
-    echo ""
-    echo -e "  1) ${GREEN}Install${NC}   - Install launchers, drivers, tools"
-    echo -e "  2) ${YELLOW}Uninstall${NC} - Remove installed packages"
-    echo -e "  3) ${BLUE}Update${NC}    - Check for updates"
-    echo -e "  4) ${RED}Quit${NC}"
-    echo ""
-    read -rp "  Enter choice: " choice
-    
-    case "$choice" in
-        1)
-            OPERATION_MODE="install"
-            return 0
-            ;;
-        2)
-            OPERATION_MODE="uninstall"
-            return 0
-            ;;
-        3)
-            check_for_updates
-            return 1
-            ;;
-        4|q|Q)
-            exit 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
+    while true; do
+        print_banner
+        show_system_info
+        
+        echo -e "${CYAN}══════════════════════════════════════════${NC}"
+        echo -e "${CYAN}           SELECT MODE                    ${NC}"
+        echo -e "${CYAN}══════════════════════════════════════════${NC}"
+        echo ""
+        echo "  What would you like to do?"
+        echo ""
+        echo -e "  1) ${GREEN}Install${NC}   - Install launchers, drivers, tools"
+        echo -e "  2) ${YELLOW}Uninstall${NC} - Remove installed packages"
+        echo -e "  3) ${BLUE}Update${NC}    - Check for updates"
+        echo -e "  4) ${RED}Quit${NC}"
+        echo ""
+        read -rp "  Enter choice: " choice
+        
+        case "$choice" in
+            1)
+                OPERATION_MODE="install"
+                return 0
+                ;;
+            2)
+                OPERATION_MODE="uninstall"
+                return 0
+                ;;
+            3)
+                check_for_updates
+                press_enter
+                ;;
+            4|q|Q)
+                exit 0
+                ;;
+            *)
+                # Invalid input - loop will redisplay menu
+                ;;
+        esac
+    done
 }
 
 count_selections() {
@@ -2140,9 +2143,7 @@ main() {
     init_selections
     
     # Show mode selection first
-    while ! mode_menu; do
-        :
-    done
+    mode_menu
     
     # Category-based main menu loop
     local selection
@@ -2183,9 +2184,7 @@ main() {
                 fi
                 ;;
             mode)
-                while ! mode_menu; do
-                    :
-                done
+                mode_menu
                 ;;
             *)
                 # Invalid selection, loop back
