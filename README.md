@@ -1,8 +1,6 @@
 # Linux Game Launcher Installer
 
-A simple, interactive tool for installing game launchers, graphics drivers, and gaming tools on Linux. Available in both **terminal (TUI)** and **graphical (GUI)** versions.
-
-I still recommend using the TUI version since the gui is still in development.
+A simple, interactive terminal tool for installing game launchers, graphics drivers, and gaming tools on Linux.
 
 Created by **Toppzi**
 
@@ -91,14 +89,12 @@ Created by **Toppzi**
 
 ## Installation
 
-### Quick Start (Terminal Version)
-
+### Quick Start
 
 # Download the script
 ```bash
 curl -O https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller.sh
 ```
-
 # Make it executable
 ```bash
 chmod +x gameinstaller.sh
@@ -108,29 +104,7 @@ chmod +x gameinstaller.sh
 ./gameinstaller.sh
 ```
 
-### GUI Version
-
-The graphical version uses Python with Tkinter.
-
-
-# Download the GUI script
-```bash
-curl -O https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller-gui.py
-```
-# Make it executable
-```bash
-chmod +x gameinstaller-gui.py
-```
-# Run it
-```bash
-./gameinstaller-gui.py
-```
-
-**Note:** The GUI version requires Python 3 and Tkinter. The script will **automatically install Tkinter** if it's missing on your system.
-
 ## Usage
-
-### Terminal Version (TUI)
 
 1. Run the script in your terminal
 2. Select mode: **Install**, **Uninstall**, or **Update Check**
@@ -139,9 +113,11 @@ chmod +x gameinstaller-gui.py
 5. Select graphics drivers (based on your GPU)
 6. Select additional gaming tools
 7. Configure system optimizations (install mode only)
-8. Configure drive mounts (optional - for game library drives)
-9. Review your selections
-10. Confirm to start the operation
+8. Configure performance tweaks (advanced users)
+9. Configure quality of life features
+10. Configure drive mounts (optional - for game library drives)
+11. Review your selections
+12. Confirm to start the operation
 
 ### Navigation
 
@@ -155,20 +131,6 @@ chmod +x gameinstaller-gui.py
 | `b` | Go back |
 | `q` | Quit |
 
-### GUI Version
-
-The GUI version provides a modern dark-themed interface with tabbed navigation:
-
-1. **Launchers Tab** - Select game launchers with checkboxes
-2. **Drivers Tab** - Select graphics drivers (with recommendations based on your GPU)
-3. **Tools Tab** - Select gaming tools and utilities
-4. **Optimize Tab** - Configure system optimizations
-5. **Drives Tab** - Configure drive mounts for game libraries
-6. **Install Tab** - Start installation and view progress
-
-**Mode Toggle**: Use the "Mode: Install/Uninstall" button to switch between modes.
-**Update Check**: Click "Check Updates" to see if a new version is available.
-
 ## Screenshots
 
 ```
@@ -181,7 +143,7 @@ The GUI version provides a modern dark-themed interface with tabbed navigation:
   ║   ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗                      ║
   ║   ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝                      ║
   ║                                                               ║
-  ║        GAME LAUNCHER INSTALLER v0.3                           ║
+  ║        GAME LAUNCHER INSTALLER v0.4                           ║
   ║                                                               ║
   ║                    Created by Toppzi                          ║
   ║                                                               ║
@@ -190,15 +152,9 @@ The GUI version provides a modern dark-themed interface with tabbed navigation:
 
 ## Requirements
 
-### Terminal Version
 - Bash 4.0+
 - `curl` or `wget` (for downloading)
 - `sudo` access (for package installation)
-- `lspci` (for GPU detection, optional)
-
-### GUI Version
-- Python 3.6+
-- Tkinter (python3-tk) - auto-installed if missing
 - `lspci` (for GPU detection, optional)
 
 ## Notes
@@ -219,11 +175,11 @@ The GUI version provides a modern dark-themed interface with tabbed navigation:
 ## Changelog
 
 ### v0.4
-- Added Performance Tweaks tab with advanced options (gaming kernels, ZRAM, vm.max_map_count, file limits)
-- Added Quality of Life tab (controller support, low-latency audio, shader cache, Protontricks)
+- Added Performance Tweaks menu with advanced options (gaming kernels, ZRAM, vm.max_map_count, file limits)
+- Added Quality of Life menu (controller support, low-latency audio, shader cache, Protontricks)
 - Added warning labels for advanced options
-- Improved menu navigation flow in TUI
-- Full feature parity between TUI and GUI
+- Improved menu navigation flow
+- Fixed drive detection for unmounted partitions
 
 ### v0.3
 - Added RetroArch and Pegasus game launchers
