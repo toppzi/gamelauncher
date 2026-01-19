@@ -2,6 +2,8 @@
 
 A simple, interactive tool for installing game launchers, graphics drivers, and gaming tools on Linux. Available in both **terminal (TUI)** and **graphical (GUI)** versions.
 
+I still recommend using the TUI version since the gui is still in development.
+
 Created by **Toppzi**
 
 ## Version 0.4 Features
