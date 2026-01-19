@@ -273,7 +273,7 @@ launcher_menu() {
         echo -e " 10) $(show_checkbox "${LAUNCHERS[pegasus]}")  Pegasus        - Game collection organizer"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to Drivers${NC}"
+        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -299,7 +299,7 @@ launcher_menu() {
                     LAUNCHERS[$key]="0"
                 done
                 ;;
-            c|C) return 0 ;;
+            b|B|c|C) return 0 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -343,8 +343,7 @@ driver_menu() {
         fi
         
         echo ""
-        echo -e "  ${GREEN}c) Continue to Tools${NC}"
-        echo -e "  ${YELLOW}b) Back to Launchers${NC}"
+        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -353,8 +352,7 @@ driver_menu() {
             case "$choice" in
                 1) toggle_selection DRIVERS nvidia ;;
                 2) toggle_selection DRIVERS nvidia_32bit ;;
-                c|C) return 0 ;;
-                b|B) return 1 ;;
+                b|B|c|C) return 0 ;;
                 q|Q) exit 0 ;;
             esac
         elif [[ "$GPU_VENDOR" == "amd" ]]; then
@@ -362,8 +360,7 @@ driver_menu() {
                 1) toggle_selection DRIVERS mesa ;;
                 2) toggle_selection DRIVERS vulkan_amd ;;
                 3) toggle_selection DRIVERS amd_32bit ;;
-                c|C) return 0 ;;
-                b|B) return 1 ;;
+                b|B|c|C) return 0 ;;
                 q|Q) exit 0 ;;
             esac
         elif [[ "$GPU_VENDOR" == "intel" ]]; then
@@ -371,8 +368,7 @@ driver_menu() {
                 1) toggle_selection DRIVERS mesa ;;
                 2) toggle_selection DRIVERS vulkan_intel ;;
                 3) toggle_selection DRIVERS intel_32bit ;;
-                c|C) return 0 ;;
-                b|B) return 1 ;;
+                b|B|c|C) return 0 ;;
                 q|Q) exit 0 ;;
             esac
         else
@@ -381,8 +377,7 @@ driver_menu() {
                 2) toggle_selection DRIVERS mesa ;;
                 3) toggle_selection DRIVERS vulkan_amd ;;
                 4) toggle_selection DRIVERS vulkan_intel ;;
-                c|C) return 0 ;;
-                b|B) return 1 ;;
+                b|B|c|C) return 0 ;;
                 q|Q) exit 0 ;;
             esac
         fi
@@ -419,8 +414,7 @@ tools_menu() {
         echo -e " 16) $(show_checkbox "${TOOLS[gpu_recorder]}")  GPU Screen Rec    - Low-overhead recording"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to System Optimization${NC}"
-        echo -e "  ${YELLOW}b) Back to Drivers${NC}"
+        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -452,8 +446,7 @@ tools_menu() {
                     TOOLS[$key]="0"
                 done
                 ;;
-            c|C) return 0 ;;
-            b|B) return 1 ;;
+            b|B|c|C) return 0 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -650,8 +643,7 @@ drives_menu() {
         
         echo ""
         echo -e "  ${CYAN}Enter drive number (1-${#AVAILABLE_DRIVES[@]}) to configure${NC}"
-        echo -e "  ${GREEN}c) Continue to Review${NC}"
-        echo -e "  ${YELLOW}b) Back to Tools${NC}"
+        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -686,8 +678,7 @@ drives_menu() {
                     fi
                 fi
                 ;;
-            c|C) return 0 ;;
-            b|B) return 1 ;;
+            b|B|c|C) return 0 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -734,8 +725,7 @@ optimization_menu() {
         echo -e "  3) $(show_checkbox "${OPTIMIZATIONS[io_scheduler]}")  I/O Scheduler    - Set to 'mq-deadline' or 'none'"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
-        echo -e "  ${YELLOW}b) Back to Tools${NC}"
+        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -754,8 +744,7 @@ optimization_menu() {
                     OPTIMIZATIONS[$key]="0"
                 done
                 ;;
-            c|C) return 0 ;;
-            b|B) return 1 ;;
+            b|B|c|C) return 0 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -858,8 +847,7 @@ performance_tweaks_menu() {
         echo -e "  4) $(show_checkbox "${PERFORMANCE_TWEAKS[file_limits]}")  File Limits        - Raise ulimits for games"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to Quality of Life${NC}"
-        echo -e "  ${YELLOW}b) Back to Optimizations${NC}"
+        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -879,8 +867,7 @@ performance_tweaks_menu() {
                     PERFORMANCE_TWEAKS[$key]="0"
                 done
                 ;;
-            c|C) return 0 ;;
-            b|B) return 1 ;;
+            b|B|c|C) return 0 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -1015,8 +1002,7 @@ qol_menu() {
         echo -e "  4) $(show_checkbox "${QOL[proton_tricks]}")  Protontricks         - Winetricks for Proton games"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
-        echo -e "  ${YELLOW}b) Back to Performance Tweaks${NC}"
+        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -1036,8 +1022,7 @@ qol_menu() {
                     QOL[$key]="0"
                 done
                 ;;
-            c|C) return 0 ;;
-            b|B) return 1 ;;
+            b|B|c|C) return 0 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -1335,7 +1320,7 @@ review_menu() {
     if [[ "$has_selection" == false ]]; then
         print_warning "Nothing selected to install or configure!"
         echo ""
-        echo -e "  ${YELLOW}b) Back to selection${NC}"
+        echo -e "  ${YELLOW}b) Back${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -1350,7 +1335,7 @@ review_menu() {
     [[ "$OPERATION_MODE" == "uninstall" ]] && action_text="Uninstallation"
     
     echo -e "  ${GREEN}i) Start $action_text${NC}"
-    echo -e "  ${YELLOW}b) Back to Drive Mounting${NC}"
+    echo -e "  ${YELLOW}b) Back to Main Menu${NC}"
     echo -e "  ${RED}q) Quit${NC}"
     echo ""
     read -rp "  Enter choice: " choice
@@ -1998,13 +1983,13 @@ init_selections() {
     done
 }
 
-main_menu() {
+mode_menu() {
     local choice
     print_banner
     show_system_info
     
     echo -e "${CYAN}══════════════════════════════════════════${NC}"
-    echo -e "${CYAN}             MAIN MENU                    ${NC}"
+    echo -e "${CYAN}           SELECT MODE                    ${NC}"
     echo -e "${CYAN}══════════════════════════════════════════${NC}"
     echo ""
     echo "  What would you like to do?"
@@ -2038,6 +2023,108 @@ main_menu() {
     esac
 }
 
+count_selections() {
+    local category=$1
+    local count=0
+    
+    case "$category" in
+        launchers)
+            for key in "${!LAUNCHERS[@]}"; do
+                [[ "${LAUNCHERS[$key]}" == "1" ]] && ((count++))
+            done
+            ;;
+        drivers)
+            for key in "${!DRIVERS[@]}"; do
+                [[ "${DRIVERS[$key]}" == "1" ]] && ((count++))
+            done
+            ;;
+        tools)
+            for key in "${!TOOLS[@]}"; do
+                [[ "${TOOLS[$key]}" == "1" ]] && ((count++))
+            done
+            ;;
+        optimizations)
+            for key in "${!OPTIMIZATIONS[@]}"; do
+                [[ "${OPTIMIZATIONS[$key]}" == "1" ]] && ((count++))
+            done
+            ;;
+        performance)
+            for key in "${!PERFORMANCE_TWEAKS[@]}"; do
+                [[ "${PERFORMANCE_TWEAKS[$key]}" == "1" ]] && ((count++))
+            done
+            ;;
+        qol)
+            for key in "${!QOL[@]}"; do
+                [[ "${QOL[$key]}" == "1" ]] && ((count++))
+            done
+            ;;
+        drives)
+            count=${#MOUNT_CONFIGS[@]}
+            ;;
+    esac
+    
+    echo "$count"
+}
+
+main_menu() {
+    local choice
+    local launcher_count driver_count tools_count opt_count perf_count qol_count drive_count
+    
+    launcher_count=$(count_selections launchers)
+    driver_count=$(count_selections drivers)
+    tools_count=$(count_selections tools)
+    opt_count=$(count_selections optimizations)
+    perf_count=$(count_selections performance)
+    qol_count=$(count_selections qol)
+    drive_count=$(count_selections drives)
+    
+    print_banner
+    show_system_info
+    
+    echo -e "${CYAN}══════════════════════════════════════════${NC}"
+    if [[ "$OPERATION_MODE" == "install" ]]; then
+        echo -e "${CYAN}         MAIN MENU - ${GREEN}INSTALL${CYAN}             ${NC}"
+    else
+        echo -e "${CYAN}         MAIN MENU - ${YELLOW}UNINSTALL${CYAN}           ${NC}"
+    fi
+    echo -e "${CYAN}══════════════════════════════════════════${NC}"
+    echo ""
+    echo "  Select a category to configure:"
+    echo ""
+    printf "  1) %-22s %s\n" "Game Launchers" "[${launcher_count} selected]"
+    printf "  2) %-22s %s\n" "Graphics Drivers" "[${driver_count} selected]"
+    printf "  3) %-22s %s\n" "Gaming Tools" "[${tools_count} selected]"
+    if [[ "$OPERATION_MODE" == "install" ]]; then
+        printf "  4) %-22s %s\n" "System Optimizations" "[${opt_count} selected]"
+        printf "  5) %-22s %s\n" "Performance Tweaks" "[${perf_count} selected]"
+        printf "  6) %-22s %s\n" "Quality of Life" "[${qol_count} selected]"
+        printf "  7) %-22s %s\n" "Drive Mounting" "[${drive_count} configured]"
+        echo ""
+        echo -e "  ${GREEN}r) Review & Install${NC}"
+    else
+        echo ""
+        echo -e "  ${YELLOW}r) Review & Uninstall${NC}"
+    fi
+    echo -e "  ${BLUE}m) Change Mode${NC} (Install/Uninstall)"
+    echo -e "  ${RED}q) Quit${NC}"
+    echo ""
+    read -rp "  Enter choice: " choice
+    
+    case "$choice" in
+        1) echo "launchers" ;;
+        2) echo "drivers" ;;
+        3) echo "tools" ;;
+        4) [[ "$OPERATION_MODE" == "install" ]] && echo "optimizations" || echo "" ;;
+        5) [[ "$OPERATION_MODE" == "install" ]] && echo "performance" || echo "" ;;
+        6) [[ "$OPERATION_MODE" == "install" ]] && echo "qol" || echo "" ;;
+        7) [[ "$OPERATION_MODE" == "install" ]] && echo "drives" || echo "" ;;
+        r|R) echo "review" ;;
+        m|M) echo "mode" ;;
+        q|Q) exit 0 ;;
+        *) echo "" ;;
+    esac
+}
+
 main() {
     check_root
     print_banner
@@ -2052,65 +2139,38 @@ main() {
     
     init_selections
     
-    # Show main menu first
-    while ! main_menu; do
+    # Show mode selection first
+    while ! mode_menu; do
         :
     done
     
-    # Main menu loop
-    local current_menu="launcher"
+    # Category-based main menu loop
+    local selection
     
     while true; do
-        case "$current_menu" in
-            launcher)
+        selection=$(main_menu)
+        
+        case "$selection" in
+            launchers)
                 launcher_menu
-                current_menu="driver"
                 ;;
-            driver)
-                if driver_menu; then
-                    current_menu="tools"
-                else
-                    current_menu="launcher"
-                fi
+            drivers)
+                driver_menu || true
                 ;;
             tools)
-                if tools_menu; then
-                    if [[ "$OPERATION_MODE" == "install" ]]; then
-                        current_menu="optimization"
-                    else
-                        current_menu="review"
-                    fi
-                else
-                    current_menu="driver"
-                fi
+                tools_menu || true
                 ;;
-            optimization)
-                if optimization_menu; then
-                    current_menu="performance"
-                else
-                    current_menu="tools"
-                fi
+            optimizations)
+                optimization_menu || true
                 ;;
             performance)
-                if performance_tweaks_menu; then
-                    current_menu="qol"
-                else
-                    current_menu="optimization"
-                fi
+                performance_tweaks_menu || true
                 ;;
             qol)
-                if qol_menu; then
-                    current_menu="drives"
-                else
-                    current_menu="performance"
-                fi
+                qol_menu || true
                 ;;
             drives)
-                if drives_menu; then
-                    current_menu="review"
-                else
-                    current_menu="qol"
-                fi
+                drives_menu || true
                 ;;
             review)
                 if review_menu; then
@@ -2120,13 +2180,15 @@ main() {
                         run_uninstallation
                     fi
                     exit 0
-                else
-                    if [[ "$OPERATION_MODE" == "install" ]]; then
-                        current_menu="drives"
-                    else
-                        current_menu="tools"
-                    fi
                 fi
+                ;;
+            mode)
+                while ! mode_menu; do
+                    :
+                done
+                ;;
+            *)
+                # Invalid selection, loop back
                 ;;
         esac
     done
