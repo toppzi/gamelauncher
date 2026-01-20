@@ -36,7 +36,7 @@ declare -A TOOLS
 # Ordered keys for consistent menu display
 LAUNCHER_KEYS=(steam lutris heroic bottles protonplus gamehub minigalaxy itch retroarch pegasus)
 DRIVER_KEYS=(nvidia nvidia_32bit mesa vulkan_amd vulkan_intel amd_32bit intel_32bit)
-TOOL_KEYS=(gamemode mangohud goverlay protonge wine winetricks dxvk vkbasalt corectrl gamescope discord obs flatseal steamtinker antimicrox gpu_recorder)
+TOOL_KEYS=(gamemode mangohud goverlay protonupqt protonge wine wine_deps winetricks dxvk vkbasalt corectrl gamescope discord obs flatseal steamtinker antimicrox gpu_recorder)
 
 # System optimization settings
 declare -A OPTIMIZATIONS
@@ -48,7 +48,7 @@ PERFORMANCE_KEYS=(gaming_kernel zram max_map_count file_limits)
 
 # Quality of Life settings
 declare -A QOL
-QOL_KEYS=(controller_support pipewire_lowlatency shader_cache proton_tricks)
+QOL_KEYS=(controller_support pipewire_lowlatency shader_cache proton_tricks vrr_freesync)
 
 # Mode (install or uninstall)
 OPERATION_MODE="install"
@@ -157,15 +157,15 @@ detect_distro() {
         DISTRO="$ID"
         
         case "$ID" in
-            arch|manjaro|endeavouros|garuda|arcolinux)
+            arch|manjaro|endeavouros|garuda|arcolinux|cachyos)
                 DISTRO_FAMILY="arch"
                 PKG_MANAGER="pacman"
                 ;;
-            debian|ubuntu|pop|linuxmint|elementary|zorin|kali)
+            debian|ubuntu|pop|linuxmint|elementary|zorin|kali|pika)
                 DISTRO_FAMILY="debian"
                 PKG_MANAGER="apt"
                 ;;
-            fedora|nobara|ultramarine)
+            fedora|nobara|ultramarine|bazzite)
                 DISTRO_FAMILY="fedora"
                 PKG_MANAGER="dnf"
                 ;;
@@ -273,7 +273,7 @@ launcher_menu() {
         echo -e " 10) $(show_checkbox "${LAUNCHERS[pegasus]}")  Pegasus        - Game collection organizer"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
+        echo -e "  ${GREEN}c) Continue to Drivers${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -299,7 +299,7 @@ launcher_menu() {
                     LAUNCHERS[$key]="0"
                 done
                 ;;
-            b|B|c|C) return 0 ;;
+            c|C) return 0 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -343,7 +343,8 @@ driver_menu() {
         fi
         
         echo ""
-        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
+        echo -e "  ${GREEN}c) Continue to Tools${NC}"
+        echo -e "  ${YELLOW}b) Back to Launchers${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -352,7 +353,8 @@ driver_menu() {
             case "$choice" in
                 1) toggle_selection DRIVERS nvidia ;;
                 2) toggle_selection DRIVERS nvidia_32bit ;;
-                b|B|c|C) return 0 ;;
+                c|C) return 0 ;;
+                b|B) return 1 ;;
                 q|Q) exit 0 ;;
             esac
         elif [[ "$GPU_VENDOR" == "amd" ]]; then
@@ -360,7 +362,8 @@ driver_menu() {
                 1) toggle_selection DRIVERS mesa ;;
                 2) toggle_selection DRIVERS vulkan_amd ;;
                 3) toggle_selection DRIVERS amd_32bit ;;
-                b|B|c|C) return 0 ;;
+                c|C) return 0 ;;
+                b|B) return 1 ;;
                 q|Q) exit 0 ;;
             esac
         elif [[ "$GPU_VENDOR" == "intel" ]]; then
@@ -368,7 +371,8 @@ driver_menu() {
                 1) toggle_selection DRIVERS mesa ;;
                 2) toggle_selection DRIVERS vulkan_intel ;;
                 3) toggle_selection DRIVERS intel_32bit ;;
-                b|B|c|C) return 0 ;;
+                c|C) return 0 ;;
+                b|B) return 1 ;;
                 q|Q) exit 0 ;;
             esac
         else
@@ -377,7 +381,8 @@ driver_menu() {
                 2) toggle_selection DRIVERS mesa ;;
                 3) toggle_selection DRIVERS vulkan_amd ;;
                 4) toggle_selection DRIVERS vulkan_intel ;;
-                b|B|c|C) return 0 ;;
+                c|C) return 0 ;;
+                b|B) return 1 ;;
                 q|Q) exit 0 ;;
             esac
         fi
@@ -399,22 +404,25 @@ tools_menu() {
         echo -e "  1) $(show_checkbox "${TOOLS[gamemode]}")  GameMode          - CPU/GPU optimizations"
         echo -e "  2) $(show_checkbox "${TOOLS[mangohud]}")  MangoHud          - Performance overlay"
         echo -e "  3) $(show_checkbox "${TOOLS[goverlay]}")  GOverlay          - MangoHud GUI config"
-        echo -e "  4) $(show_checkbox "${TOOLS[protonge]}")  Proton-GE         - Custom Proton builds"
-        echo -e "  5) $(show_checkbox "${TOOLS[wine]}")  Wine              - Windows compatibility"
-        echo -e "  6) $(show_checkbox "${TOOLS[winetricks]}")  Winetricks        - Wine helper scripts"
-        echo -e "  7) $(show_checkbox "${TOOLS[dxvk]}")  DXVK              - DirectX to Vulkan"
-        echo -e "  8) $(show_checkbox "${TOOLS[vkbasalt]}")  vkBasalt          - Vulkan post-processing"
-        echo -e "  9) $(show_checkbox "${TOOLS[corectrl]}")  CoreCtrl          - GPU control panel"
-        echo -e " 10) $(show_checkbox "${TOOLS[gamescope]}")  Gamescope         - Micro-compositor"
-        echo -e " 11) $(show_checkbox "${TOOLS[discord]}")  Discord           - Voice & Text Chat"
-        echo -e " 12) $(show_checkbox "${TOOLS[obs]}")  OBS Studio        - Streaming/Recording"
-        echo -e " 13) $(show_checkbox "${TOOLS[flatseal]}")  Flatseal          - Flatpak Permissions"
-        echo -e " 14) $(show_checkbox "${TOOLS[steamtinker]}")  Steam Tinker      - Steam game tweaking"
-        echo -e " 15) $(show_checkbox "${TOOLS[antimicrox]}")  AntiMicroX        - Controller remapping"
-        echo -e " 16) $(show_checkbox "${TOOLS[gpu_recorder]}")  GPU Screen Rec    - Low-overhead recording"
+        echo -e "  4) $(show_checkbox "${TOOLS[protonupqt]}")  ProtonUp-Qt       - Proton/Wine manager GUI"
+        echo -e "  5) $(show_checkbox "${TOOLS[protonge]}")  Proton-GE         - Custom Proton builds"
+        echo -e "  6) $(show_checkbox "${TOOLS[wine]}")  Wine              - Windows compatibility"
+        echo -e "  7) $(show_checkbox "${TOOLS[wine_deps]}")  Wine Dependencies - Full Wine prerequisites"
+        echo -e "  8) $(show_checkbox "${TOOLS[winetricks]}")  Winetricks        - Wine helper scripts"
+        echo -e "  9) $(show_checkbox "${TOOLS[dxvk]}")  DXVK              - DirectX to Vulkan"
+        echo -e " 10) $(show_checkbox "${TOOLS[vkbasalt]}")  vkBasalt          - Vulkan post-processing"
+        echo -e " 11) $(show_checkbox "${TOOLS[corectrl]}")  CoreCtrl          - GPU control panel"
+        echo -e " 12) $(show_checkbox "${TOOLS[gamescope]}")  Gamescope         - Micro-compositor"
+        echo -e " 13) $(show_checkbox "${TOOLS[discord]}")  Discord           - Voice & Text Chat"
+        echo -e " 14) $(show_checkbox "${TOOLS[obs]}")  OBS Studio        - Streaming/Recording"
+        echo -e " 15) $(show_checkbox "${TOOLS[flatseal]}")  Flatseal          - Flatpak Permissions"
+        echo -e " 16) $(show_checkbox "${TOOLS[steamtinker]}")  Steam Tinker      - Steam game tweaking"
+        echo -e " 17) $(show_checkbox "${TOOLS[antimicrox]}")  AntiMicroX        - Controller remapping"
+        echo -e " 18) $(show_checkbox "${TOOLS[gpu_recorder]}")  GPU Screen Rec    - Low-overhead recording"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
+        echo -e "  ${GREEN}c) Continue to System Optimization${NC}"
+        echo -e "  ${YELLOW}b) Back to Drivers${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -423,19 +431,21 @@ tools_menu() {
             1) toggle_selection TOOLS gamemode ;;
             2) toggle_selection TOOLS mangohud ;;
             3) toggle_selection TOOLS goverlay ;;
-            4) toggle_selection TOOLS protonge ;;
-            5) toggle_selection TOOLS wine ;;
-            6) toggle_selection TOOLS winetricks ;;
-            7) toggle_selection TOOLS dxvk ;;
-            8) toggle_selection TOOLS vkbasalt ;;
-            9) toggle_selection TOOLS corectrl ;;
-            10) toggle_selection TOOLS gamescope ;;
-            11) toggle_selection TOOLS discord ;;
-            12) toggle_selection TOOLS obs ;;
-            13) toggle_selection TOOLS flatseal ;;
-            14) toggle_selection TOOLS steamtinker ;;
-            15) toggle_selection TOOLS antimicrox ;;
-            16) toggle_selection TOOLS gpu_recorder ;;
+            4) toggle_selection TOOLS protonupqt ;;
+            5) toggle_selection TOOLS protonge ;;
+            6) toggle_selection TOOLS wine ;;
+            7) toggle_selection TOOLS wine_deps ;;
+            8) toggle_selection TOOLS winetricks ;;
+            9) toggle_selection TOOLS dxvk ;;
+            10) toggle_selection TOOLS vkbasalt ;;
+            11) toggle_selection TOOLS corectrl ;;
+            12) toggle_selection TOOLS gamescope ;;
+            13) toggle_selection TOOLS discord ;;
+            14) toggle_selection TOOLS obs ;;
+            15) toggle_selection TOOLS flatseal ;;
+            16) toggle_selection TOOLS steamtinker ;;
+            17) toggle_selection TOOLS antimicrox ;;
+            18) toggle_selection TOOLS gpu_recorder ;;
             a|A)
                 for key in "${TOOL_KEYS[@]}"; do
                     TOOLS[$key]="1"
@@ -446,7 +456,8 @@ tools_menu() {
                     TOOLS[$key]="0"
                 done
                 ;;
-            b|B|c|C) return 0 ;;
+            c|C) return 0 ;;
+            b|B) return 1 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -643,7 +654,8 @@ drives_menu() {
         
         echo ""
         echo -e "  ${CYAN}Enter drive number (1-${#AVAILABLE_DRIVES[@]}) to configure${NC}"
-        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
+        echo -e "  ${GREEN}c) Continue to Review${NC}"
+        echo -e "  ${YELLOW}b) Back to Tools${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -678,7 +690,8 @@ drives_menu() {
                     fi
                 fi
                 ;;
-            b|B|c|C) return 0 ;;
+            c|C) return 0 ;;
+            b|B) return 1 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -725,7 +738,8 @@ optimization_menu() {
         echo -e "  3) $(show_checkbox "${OPTIMIZATIONS[io_scheduler]}")  I/O Scheduler    - Set to 'mq-deadline' or 'none'"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
+        echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
+        echo -e "  ${YELLOW}b) Back to Tools${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -744,7 +758,8 @@ optimization_menu() {
                     OPTIMIZATIONS[$key]="0"
                 done
                 ;;
-            b|B|c|C) return 0 ;;
+            c|C) return 0 ;;
+            b|B) return 1 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -847,7 +862,8 @@ performance_tweaks_menu() {
         echo -e "  4) $(show_checkbox "${PERFORMANCE_TWEAKS[file_limits]}")  File Limits        - Raise ulimits for games"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
+        echo -e "  ${GREEN}c) Continue to Quality of Life${NC}"
+        echo -e "  ${YELLOW}b) Back to Optimizations${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -867,7 +883,8 @@ performance_tweaks_menu() {
                     PERFORMANCE_TWEAKS[$key]="0"
                 done
                 ;;
-            b|B|c|C) return 0 ;;
+            c|C) return 0 ;;
+            b|B) return 1 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -1000,9 +1017,11 @@ qol_menu() {
         echo -e "  2) $(show_checkbox "${QOL[pipewire_lowlatency]}")  Low-Latency Audio    - PipeWire gaming configuration"
         echo -e "  3) $(show_checkbox "${QOL[shader_cache]}")  Shader Cache Setup   - Configure Mesa/Steam shader cache"
         echo -e "  4) $(show_checkbox "${QOL[proton_tricks]}")  Protontricks         - Winetricks for Proton games"
+        echo -e "  5) $(show_checkbox "${QOL[vrr_freesync]}")  VRR/FreeSync         - Variable refresh rate setup"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}b) Back to Main Menu${NC}"
+        echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
+        echo -e "  ${YELLOW}b) Back to Performance Tweaks${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -1012,6 +1031,7 @@ qol_menu() {
             2) toggle_selection QOL pipewire_lowlatency ;;
             3) toggle_selection QOL shader_cache ;;
             4) toggle_selection QOL proton_tricks ;;
+            5) toggle_selection QOL vrr_freesync ;;
             a|A)
                 for key in "${QOL_KEYS[@]}"; do
                     QOL[$key]="1"
@@ -1022,7 +1042,8 @@ qol_menu() {
                     QOL[$key]="0"
                 done
                 ;;
-            b|B|c|C) return 0 ;;
+            c|C) return 0 ;;
+            b|B) return 1 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -1141,6 +1162,42 @@ EOF
         esac
         
         print_success "Protontricks installed"
+        applied=true
+    fi
+    
+    # VRR/FreeSync setup
+    if [[ "${QOL[vrr_freesync]}" == "1" ]]; then
+        print_info "Configuring VRR/FreeSync..."
+        
+        # Create Xorg config for AMD FreeSync
+        sudo mkdir -p /etc/X11/xorg.conf.d
+        sudo tee /etc/X11/xorg.conf.d/20-amdgpu.conf > /dev/null << 'EOF'
+Section "Device"
+    Identifier "AMD"
+    Driver "amdgpu"
+    Option "VariableRefresh" "true"
+    Option "TearFree" "true"
+EndSection
+EOF
+        
+        # For NVIDIA, enable G-SYNC Compatible in nvidia-settings
+        if command -v nvidia-settings &>/dev/null; then
+            print_info "For NVIDIA: Enable 'G-SYNC Compatible' in nvidia-settings"
+        fi
+        
+        # KDE/KWin VRR config
+        if [[ -d ~/.config ]]; then
+            mkdir -p ~/.config
+            # KDE Plasma 5.27+ supports VRR via kwinrc
+            if command -v kwriteconfig5 &>/dev/null; then
+                kwriteconfig5 --file kwinrc --group Compositing --key AllowTearing true 2>/dev/null || true
+            fi
+        fi
+        
+        # Gamescope hint for VRR
+        print_info "Use 'gamescope --adaptive-sync' for per-game VRR"
+        
+        print_success "VRR/FreeSync configured"
         applied=true
     fi
     
@@ -1320,7 +1377,7 @@ review_menu() {
     if [[ "$has_selection" == false ]]; then
         print_warning "Nothing selected to install or configure!"
         echo ""
-        echo -e "  ${YELLOW}b) Back${NC}"
+        echo -e "  ${YELLOW}b) Back to selection${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -1335,7 +1392,7 @@ review_menu() {
     [[ "$OPERATION_MODE" == "uninstall" ]] && action_text="Uninstallation"
     
     echo -e "  ${GREEN}i) Start $action_text${NC}"
-    echo -e "  ${YELLOW}b) Back to Main Menu${NC}"
+    echo -e "  ${YELLOW}b) Back to Drive Mounting${NC}"
     echo -e "  ${RED}q) Quit${NC}"
     echo ""
     read -rp "  Enter choice: " choice
@@ -1400,6 +1457,7 @@ install_arch() {
     [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud lib32-mangohud)
     [[ "${TOOLS[goverlay]}" == "1" ]] && packages+=(goverlay)
     [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine wine-mono wine-gecko)
+    [[ "${TOOLS[wine_deps]}" == "1" ]] && packages+=(lib32-gnutls lib32-libpulse lib32-openal lib32-libxcomposite lib32-libxinerama lib32-gst-plugins-base-libs lib32-libva)
     [[ "${TOOLS[winetricks]}" == "1" ]] && packages+=(winetricks)
     [[ "${TOOLS[dxvk]}" == "1" ]] && packages+=(dxvk)
     [[ "${TOOLS[corectrl]}" == "1" ]] && packages+=(corectrl)
@@ -1420,6 +1478,7 @@ install_arch() {
     [[ "${LAUNCHERS[minigalaxy]}" == "1" ]] && aur_packages+=(minigalaxy)
     [[ "${LAUNCHERS[itch]}" == "1" ]] && aur_packages+=(itch)
     [[ "${LAUNCHERS[pegasus]}" == "1" ]] && aur_packages+=(pegasus-frontend-git)
+    [[ "${TOOLS[protonupqt]}" == "1" ]] && aur_packages+=(protonup-qt-bin)
     [[ "${TOOLS[protonge]}" == "1" ]] && aur_packages+=(proton-ge-custom-bin)
     [[ "${TOOLS[vkbasalt]}" == "1" ]] && aur_packages+=(vkbasalt lib32-vkbasalt)
     [[ "${TOOLS[steamtinker]}" == "1" ]] && aur_packages+=(steamtinkerlaunch)
@@ -1534,6 +1593,7 @@ install_debian() {
     [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode)
     [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
     [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine wine64 wine32)
+    [[ "${TOOLS[wine_deps]}" == "1" ]] && packages+=(libasound2-plugins:i386 libsdl2-2.0-0:i386 libdbus-1-3:i386 libsqlite3-0:i386 libgnutls30:i386 libpulse0:i386 libopenal1:i386 libxcomposite1:i386 libxinerama1:i386 libgstreamer-plugins-base1.0-0:i386)
     [[ "${TOOLS[winetricks]}" == "1" ]] && packages+=(winetricks)
     [[ "${TOOLS[dxvk]}" == "1" ]] && packages+=(dxvk)
     [[ "${TOOLS[gamescope]}" == "1" ]] && packages+=(gamescope)
@@ -1550,6 +1610,7 @@ install_debian() {
     [[ "${LAUNCHERS[protonplus]}" == "1" ]] && flatpak_packages+=(com.vysp3r.ProtonPlus)
     [[ "${LAUNCHERS[minigalaxy]}" == "1" ]] && flatpak_packages+=(io.github.sharkwouter.Minigalaxy)
     [[ "${LAUNCHERS[itch]}" == "1" ]] && flatpak_packages+=(io.itch.itch)
+    [[ "${TOOLS[protonupqt]}" == "1" ]] && flatpak_packages+=(net.davidotek.pupgui2)
     [[ "${TOOLS[goverlay]}" == "1" ]] && flatpak_packages+=(io.github.benjamimgois.goverlay)
     [[ "${TOOLS[corectrl]}" == "1" ]] && flatpak_packages+=(org.corectrl.CoreCtrl)
     [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
@@ -1615,6 +1676,7 @@ install_fedora() {
     [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
     [[ "${TOOLS[goverlay]}" == "1" ]] && packages+=(goverlay)
     [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine wine-core)
+    [[ "${TOOLS[wine_deps]}" == "1" ]] && packages+=(alsa-plugins-pulseaudio.i686 gnutls.i686 libpulseaudio.i686 openal-soft.i686 libXcomposite.i686 libXinerama.i686 gstreamer1-plugins-base.i686)
     [[ "${TOOLS[winetricks]}" == "1" ]] && packages+=(winetricks)
     [[ "${TOOLS[vkbasalt]}" == "1" ]] && packages+=(vkBasalt)
     [[ "${TOOLS[corectrl]}" == "1" ]] && packages+=(corectrl)
@@ -1634,6 +1696,7 @@ install_fedora() {
     [[ "${LAUNCHERS[minigalaxy]}" == "1" ]] && flatpak_packages+=(io.github.sharkwouter.Minigalaxy)
     [[ "${LAUNCHERS[itch]}" == "1" ]] && flatpak_packages+=(io.itch.itch)
     [[ "${LAUNCHERS[pegasus]}" == "1" ]] && flatpak_packages+=(org.pegasus_frontend.Pegasus)
+    [[ "${TOOLS[protonupqt]}" == "1" ]] && flatpak_packages+=(net.davidotek.pupgui2)
     [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
     [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
     [[ "${TOOLS[steamtinker]}" == "1" ]] && flatpak_packages+=(com.github.Matoking.SteamTinkerLaunch)
@@ -1683,6 +1746,7 @@ install_opensuse() {
     [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode)
     [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
     [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine)
+    [[ "${TOOLS[wine_deps]}" == "1" ]] && packages+=(alsa-plugins-pulse-32bit gnutls-32bit libpulse0-32bit openal-soft-32bit libXcomposite1-32bit libXinerama1-32bit)
     [[ "${TOOLS[winetricks]}" == "1" ]] && packages+=(winetricks)
     [[ "${TOOLS[gamescope]}" == "1" ]] && packages+=(gamescope)
     [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
@@ -1701,6 +1765,7 @@ install_opensuse() {
     [[ "${LAUNCHERS[gamehub]}" == "1" ]] && flatpak_packages+=(com.github.tkashkin.gamehub)
     [[ "${LAUNCHERS[retroarch]}" == "1" ]] && flatpak_packages+=(org.libretro.RetroArch)
     [[ "${LAUNCHERS[pegasus]}" == "1" ]] && flatpak_packages+=(org.pegasus_frontend.Pegasus)
+    [[ "${TOOLS[protonupqt]}" == "1" ]] && flatpak_packages+=(net.davidotek.pupgui2)
     [[ "${TOOLS[goverlay]}" == "1" ]] && flatpak_packages+=(io.github.benjamimgois.goverlay)
     [[ "${TOOLS[corectrl]}" == "1" ]] && flatpak_packages+=(org.corectrl.CoreCtrl)
     [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
@@ -1734,7 +1799,7 @@ install_opensuse() {
 # UPDATE CHECKER
 # ============================================================================
 
-SCRIPT_VERSION="0.3"
+SCRIPT_VERSION="0.4"
 UPDATE_URL="https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller.sh"
 
 check_for_updates() {
@@ -1981,150 +2046,53 @@ init_selections() {
     for key in "${OPTIMIZATION_KEYS[@]}"; do
         OPTIMIZATIONS[$key]="0"
     done
-}
-
-mode_menu() {
-    local choice
     
-    while true; do
-        print_banner
-        show_system_info
-        
-        echo -e "${CYAN}══════════════════════════════════════════${NC}"
-        echo -e "${CYAN}           SELECT MODE                    ${NC}"
-        echo -e "${CYAN}══════════════════════════════════════════${NC}"
-        echo ""
-        echo "  What would you like to do?"
-        echo ""
-        echo -e "  1) ${GREEN}Install${NC}   - Install launchers, drivers, tools"
-        echo -e "  2) ${YELLOW}Uninstall${NC} - Remove installed packages"
-        echo -e "  3) ${BLUE}Update${NC}    - Check for updates"
-        echo -e "  4) ${RED}Quit${NC}"
-        echo ""
-        read -rp "  Enter choice: " choice
-        
-        case "$choice" in
-            1)
-                OPERATION_MODE="install"
-                return 0
-                ;;
-            2)
-                OPERATION_MODE="uninstall"
-                return 0
-                ;;
-            3)
-                check_for_updates
-                press_enter
-                ;;
-            4|q|Q)
-                exit 0
-                ;;
-            *)
-                # Invalid input - loop will redisplay menu
-                ;;
-        esac
+    for key in "${PERFORMANCE_KEYS[@]}"; do
+        PERFORMANCE_TWEAKS[$key]="0"
     done
-}
-
-count_selections() {
-    local category=$1
-    local count=0
     
-    case "$category" in
-        launchers)
-            for key in "${!LAUNCHERS[@]}"; do
-                [[ "${LAUNCHERS[$key]}" == "1" ]] && ((count++))
-            done
-            ;;
-        drivers)
-            for key in "${!DRIVERS[@]}"; do
-                [[ "${DRIVERS[$key]}" == "1" ]] && ((count++))
-            done
-            ;;
-        tools)
-            for key in "${!TOOLS[@]}"; do
-                [[ "${TOOLS[$key]}" == "1" ]] && ((count++))
-            done
-            ;;
-        optimizations)
-            for key in "${!OPTIMIZATIONS[@]}"; do
-                [[ "${OPTIMIZATIONS[$key]}" == "1" ]] && ((count++))
-            done
-            ;;
-        performance)
-            for key in "${!PERFORMANCE_TWEAKS[@]}"; do
-                [[ "${PERFORMANCE_TWEAKS[$key]}" == "1" ]] && ((count++))
-            done
-            ;;
-        qol)
-            for key in "${!QOL[@]}"; do
-                [[ "${QOL[$key]}" == "1" ]] && ((count++))
-            done
-            ;;
-        drives)
-            count=${#MOUNT_CONFIGS[@]}
-            ;;
-    esac
-    
-    echo "$count"
+    for key in "${QOL_KEYS[@]}"; do
+        QOL[$key]="0"
+    done
 }
 
 main_menu() {
     local choice
-    local launcher_count driver_count tools_count opt_count perf_count qol_count drive_count
-    
-    launcher_count=$(count_selections launchers)
-    driver_count=$(count_selections drivers)
-    tools_count=$(count_selections tools)
-    opt_count=$(count_selections optimizations)
-    perf_count=$(count_selections performance)
-    qol_count=$(count_selections qol)
-    drive_count=$(count_selections drives)
-    
     print_banner
     show_system_info
     
     echo -e "${CYAN}══════════════════════════════════════════${NC}"
-    if [[ "$OPERATION_MODE" == "install" ]]; then
-        echo -e "${CYAN}         MAIN MENU - ${GREEN}INSTALL${CYAN}             ${NC}"
-    else
-        echo -e "${CYAN}         MAIN MENU - ${YELLOW}UNINSTALL${CYAN}           ${NC}"
-    fi
+    echo -e "${CYAN}             MAIN MENU                    ${NC}"
     echo -e "${CYAN}══════════════════════════════════════════${NC}"
     echo ""
-    echo "  Select a category to configure:"
+    echo "  What would you like to do?"
     echo ""
-    printf "  1) %-22s %s\n" "Game Launchers" "[${launcher_count} selected]"
-    printf "  2) %-22s %s\n" "Graphics Drivers" "[${driver_count} selected]"
-    printf "  3) %-22s %s\n" "Gaming Tools" "[${tools_count} selected]"
-    if [[ "$OPERATION_MODE" == "install" ]]; then
-        printf "  4) %-22s %s\n" "System Optimizations" "[${opt_count} selected]"
-        printf "  5) %-22s %s\n" "Performance Tweaks" "[${perf_count} selected]"
-        printf "  6) %-22s %s\n" "Quality of Life" "[${qol_count} selected]"
-        printf "  7) %-22s %s\n" "Drive Mounting" "[${drive_count} configured]"
-        echo ""
-        echo -e "  ${GREEN}r) Review & Install${NC}"
-    else
-        echo ""
-        echo -e "  ${YELLOW}r) Review & Uninstall${NC}"
-    fi
-    echo -e "  ${BLUE}m) Change Mode${NC} (Install/Uninstall)"
-    echo -e "  ${RED}q) Quit${NC}"
+    echo -e "  1) ${GREEN}Install${NC}   - Install launchers, drivers, tools"
+    echo -e "  2) ${YELLOW}Uninstall${NC} - Remove installed packages"
+    echo -e "  3) ${BLUE}Update${NC}    - Check for updates"
+    echo -e "  4) ${RED}Quit${NC}"
     echo ""
     read -rp "  Enter choice: " choice
     
     case "$choice" in
-        1) echo "launchers" ;;
-        2) echo "drivers" ;;
-        3) echo "tools" ;;
-        4) [[ "$OPERATION_MODE" == "install" ]] && echo "optimizations" || echo "" ;;
-        5) [[ "$OPERATION_MODE" == "install" ]] && echo "performance" || echo "" ;;
-        6) [[ "$OPERATION_MODE" == "install" ]] && echo "qol" || echo "" ;;
-        7) [[ "$OPERATION_MODE" == "install" ]] && echo "drives" || echo "" ;;
-        r|R) echo "review" ;;
-        m|M) echo "mode" ;;
-        q|Q) exit 0 ;;
-        *) echo "" ;;
+        1)
+            OPERATION_MODE="install"
+            return 0
+            ;;
+        2)
+            OPERATION_MODE="uninstall"
+            return 0
+            ;;
+        3)
+            check_for_updates
+            return 1
+            ;;
+        4|q|Q)
+            exit 0
+            ;;
+        *)
+            return 1
+            ;;
     esac
 }
 
@@ -2142,36 +2110,65 @@ main() {
     
     init_selections
     
-    # Show mode selection first
-    mode_menu
+    # Show main menu first
+    while ! main_menu; do
+        :
+    done
     
-    # Category-based main menu loop
-    local selection
+    # Main menu loop
+    local current_menu="launcher"
     
     while true; do
-        selection=$(main_menu)
-        
-        case "$selection" in
-            launchers)
+        case "$current_menu" in
+            launcher)
                 launcher_menu
+                current_menu="driver"
                 ;;
-            drivers)
-                driver_menu || true
+            driver)
+                if driver_menu; then
+                    current_menu="tools"
+                else
+                    current_menu="launcher"
+                fi
                 ;;
             tools)
-                tools_menu || true
+                if tools_menu; then
+                    if [[ "$OPERATION_MODE" == "install" ]]; then
+                        current_menu="optimization"
+                    else
+                        current_menu="review"
+                    fi
+                else
+                    current_menu="driver"
+                fi
                 ;;
-            optimizations)
-                optimization_menu || true
+            optimization)
+                if optimization_menu; then
+                    current_menu="performance"
+                else
+                    current_menu="tools"
+                fi
                 ;;
             performance)
-                performance_tweaks_menu || true
+                if performance_tweaks_menu; then
+                    current_menu="qol"
+                else
+                    current_menu="optimization"
+                fi
                 ;;
             qol)
-                qol_menu || true
+                if qol_menu; then
+                    current_menu="drives"
+                else
+                    current_menu="performance"
+                fi
                 ;;
             drives)
-                drives_menu || true
+                if drives_menu; then
+                    current_menu="review"
+                else
+                    current_menu="qol"
+                fi
                 ;;
             review)
                 if review_menu; then
@@ -2181,13 +2178,13 @@ main() {
                         run_uninstallation
                     fi
                     exit 0
+                else
+                    if [[ "$OPERATION_MODE" == "install" ]]; then
+                        current_menu="drives"
+                    else
+                        current_menu="tools"
+                    fi
                 fi
-                ;;
-            mode)
-                mode_menu
-                ;;
-            *)
-                # Invalid selection, loop back
                 ;;
         esac
     done
