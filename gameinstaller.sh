@@ -274,6 +274,7 @@ launcher_menu() {
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
         echo -e "  ${GREEN}c) Continue to Drivers${NC}"
+        echo -e "  ${YELLOW}b) Back to Main Menu${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -300,6 +301,7 @@ launcher_menu() {
                 done
                 ;;
             c|C) return 0 ;;
+            b|B) return 1 ;;
             q|Q) exit 0 ;;
         esac
     done
@@ -2121,8 +2123,16 @@ main() {
     while true; do
         case "$current_menu" in
             launcher)
-                launcher_menu
-                current_menu="driver"
+                if launcher_menu; then
+                    current_menu="driver"
+                else
+                    current_menu="main"
+                fi
+                ;;
+            main)
+                if main_menu; then
+                    current_menu="launcher"
+                fi
                 ;;
             driver)
                 if driver_menu; then
