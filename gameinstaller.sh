@@ -204,6 +204,66 @@ detect_gpu() {
     fi
 }
 
+detect_kernel() {
+    KERNEL_VERSION=$(uname -r 2>/dev/null || echo "unknown")
+}
+
+detect_gpu_driver() {
+    GPU_DRIVER_VERSION="unknown"
+    
+    case "$GPU_VENDOR" in
+        nvidia)
+            # Try nvidia-smi first
+            if command -v nvidia-smi &>/dev/null; then
+                GPU_DRIVER_VERSION=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1 || echo "")
+            fi
+            # Fallback to modinfo
+            if [[ -z "$GPU_DRIVER_VERSION" || "$GPU_DRIVER_VERSION" == "unknown" ]]; then
+                GPU_DRIVER_VERSION=$(modinfo nvidia 2>/dev/null | grep "^version:" | awk '{print $2}' || echo "")
+            fi
+            # Check if nouveau is loaded instead
+            if [[ -z "$GPU_DRIVER_VERSION" ]] && lsmod 2>/dev/null | grep -q "^nouveau"; then
+                GPU_DRIVER_VERSION="nouveau (open)"
+            fi
+            ;;
+        amd)
+            # Check for amdgpu driver
+            if lsmod 2>/dev/null | grep -q "^amdgpu"; then
+                GPU_DRIVER_VERSION=$(modinfo amdgpu 2>/dev/null | grep "^version:" | awk '{print $2}' || echo "")
+                if [[ -z "$GPU_DRIVER_VERSION" ]]; then
+                    GPU_DRIVER_VERSION="amdgpu (loaded)"
+                fi
+            elif lsmod 2>/dev/null | grep -q "^radeon"; then
+                GPU_DRIVER_VERSION="radeon (legacy)"
+            fi
+            # Try to get Mesa version for AMD
+            if command -v glxinfo &>/dev/null; then
+                local mesa_ver
+                mesa_ver=$(glxinfo 2>/dev/null | grep "OpenGL version" | grep -oP "Mesa \K[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
+                if [[ -n "$mesa_ver" ]]; then
+                    GPU_DRIVER_VERSION="Mesa $mesa_ver"
+                fi
+            fi
+            ;;
+        intel)
+            # Intel uses i915 driver
+            if lsmod 2>/dev/null | grep -q "^i915"; then
+                GPU_DRIVER_VERSION="i915 (loaded)"
+            fi
+            # Try to get Mesa version for Intel
+            if command -v glxinfo &>/dev/null; then
+                local mesa_ver
+                mesa_ver=$(glxinfo 2>/dev/null | grep "OpenGL version" | grep -oP "Mesa \K[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
+                if [[ -n "$mesa_ver" ]]; then
+                    GPU_DRIVER_VERSION="Mesa $mesa_ver"
+                fi
+            fi
+            ;;
+    esac
+    
+    [[ -z "$GPU_DRIVER_VERSION" ]] && GPU_DRIVER_VERSION="not detected"
+}
+
 show_system_info() {
     echo ""
     echo -e "${CYAN}┌─────────────────────────────────────────┐${NC}"
@@ -212,7 +272,9 @@ show_system_info() {
     echo -e "${CYAN}│${NC} Distribution: ${GREEN}$DISTRO${NC}"
     echo -e "${CYAN}│${NC} Family:       ${GREEN}$DISTRO_FAMILY${NC}"
     echo -e "${CYAN}│${NC} Package Mgr:  ${GREEN}$PKG_MANAGER${NC}"
+    echo -e "${CYAN}│${NC} Kernel:       ${GREEN}$KERNEL_VERSION${NC}"
     echo -e "${CYAN}│${NC} GPU Vendor:   ${GREEN}$GPU_VENDOR${NC}"
+    echo -e "${CYAN}│${NC} GPU Driver:   ${GREEN}$GPU_DRIVER_VERSION${NC}"
     echo -e "${CYAN}└─────────────────────────────────────────┘${NC}"
     echo ""
 }
@@ -2105,6 +2167,8 @@ main() {
     print_info "Detecting system..."
     detect_distro
     detect_gpu
+    detect_kernel
+    detect_gpu_driver
     check_dependencies
     
     show_system_info
