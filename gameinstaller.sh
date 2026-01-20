@@ -209,17 +209,18 @@ detect_kernel() {
 }
 
 detect_gpu_driver() {
-    GPU_DRIVER_VERSION="unknown"
+    GPU_DRIVER_VERSION="not detected"
     
     case "$GPU_VENDOR" in
         nvidia)
             # Try nvidia-smi first
             if command -v nvidia-smi &>/dev/null; then
-                GPU_DRIVER_VERSION=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1 || echo "")
+                GPU_DRIVER_VERSION=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1) || true
+                [[ -z "$GPU_DRIVER_VERSION" ]] && GPU_DRIVER_VERSION=""
             fi
             # Fallback to modinfo
-            if [[ -z "$GPU_DRIVER_VERSION" || "$GPU_DRIVER_VERSION" == "unknown" ]]; then
-                GPU_DRIVER_VERSION=$(modinfo nvidia 2>/dev/null | grep "^version:" | awk '{print $2}' || echo "")
+            if [[ -z "$GPU_DRIVER_VERSION" ]]; then
+                GPU_DRIVER_VERSION=$(modinfo nvidia 2>/dev/null | awk '/^version:/{print $2}') || true
             fi
             # Check if nouveau is loaded instead
             if [[ -z "$GPU_DRIVER_VERSION" ]] && lsmod 2>/dev/null | grep -q "^nouveau"; then
@@ -229,20 +230,16 @@ detect_gpu_driver() {
         amd)
             # Check for amdgpu driver
             if lsmod 2>/dev/null | grep -q "^amdgpu"; then
-                GPU_DRIVER_VERSION=$(modinfo amdgpu 2>/dev/null | grep "^version:" | awk '{print $2}' || echo "")
-                if [[ -z "$GPU_DRIVER_VERSION" ]]; then
-                    GPU_DRIVER_VERSION="amdgpu (loaded)"
-                fi
+                GPU_DRIVER_VERSION=$(modinfo amdgpu 2>/dev/null | awk '/^version:/{print $2}') || true
+                [[ -z "$GPU_DRIVER_VERSION" ]] && GPU_DRIVER_VERSION="amdgpu (loaded)"
             elif lsmod 2>/dev/null | grep -q "^radeon"; then
                 GPU_DRIVER_VERSION="radeon (legacy)"
             fi
             # Try to get Mesa version for AMD
-            if command -v glxinfo &>/dev/null; then
+            if [[ -z "$GPU_DRIVER_VERSION" || "$GPU_DRIVER_VERSION" == "amdgpu (loaded)" ]] && command -v glxinfo &>/dev/null; then
                 local mesa_ver
-                mesa_ver=$(glxinfo 2>/dev/null | grep "OpenGL version" | grep -oP "Mesa \K[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
-                if [[ -n "$mesa_ver" ]]; then
-                    GPU_DRIVER_VERSION="Mesa $mesa_ver"
-                fi
+                mesa_ver=$(glxinfo 2>/dev/null | sed -n 's/.*Mesa \([0-9][0-9.]*\).*/\1/p' | head -1) || true
+                [[ -n "$mesa_ver" ]] && GPU_DRIVER_VERSION="Mesa $mesa_ver"
             fi
             ;;
         intel)
@@ -253,10 +250,8 @@ detect_gpu_driver() {
             # Try to get Mesa version for Intel
             if command -v glxinfo &>/dev/null; then
                 local mesa_ver
-                mesa_ver=$(glxinfo 2>/dev/null | grep "OpenGL version" | grep -oP "Mesa \K[0-9]+\.[0-9]+(\.[0-9]+)?" | head -1 || echo "")
-                if [[ -n "$mesa_ver" ]]; then
-                    GPU_DRIVER_VERSION="Mesa $mesa_ver"
-                fi
+                mesa_ver=$(glxinfo 2>/dev/null | sed -n 's/.*Mesa \([0-9][0-9.]*\).*/\1/p' | head -1) || true
+                [[ -n "$mesa_ver" ]] && GPU_DRIVER_VERSION="Mesa $mesa_ver"
             fi
             ;;
     esac
