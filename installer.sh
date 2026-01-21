@@ -10,6 +10,80 @@
 #
 # ============================================================================
 
+VERSION="1.0"
+SCRIPT_NAME="Linux Game Launcher Installer"
+
+# Show version
+show_version() {
+    echo "$SCRIPT_NAME v$VERSION"
+    echo "Created by Toppzi"
+}
+
+# Show help
+show_help() {
+    echo ""
+    echo "$SCRIPT_NAME v$VERSION"
+    echo ""
+    echo "Usage: $(basename "$0") [OPTIONS]"
+    echo ""
+    echo "A terminal-based tool for setting up Linux gaming environments."
+    echo "Installs game launchers, graphics drivers, and gaming tools."
+    echo ""
+    echo "Options:"
+    echo "  -h, --help      Show this help message and exit"
+    echo "  -v, --version   Show version information and exit"
+    echo ""
+    echo "Supported Distributions:"
+    echo "  Arch:     Arch Linux, Manjaro, EndeavourOS, Garuda, CachyOS"
+    echo "  Debian:   Debian, Ubuntu, Pop!_OS, Linux Mint, Zorin, PikaOS"
+    echo "  Fedora:   Fedora, Nobara, Ultramarine, Bazzite"
+    echo "  openSUSE: openSUSE Tumbleweed, openSUSE Leap"
+    echo ""
+    echo "Features:"
+    echo "  - 10 game launchers (Steam, Lutris, Heroic, Bottles, etc.)"
+    echo "  - Graphics drivers (NVIDIA, AMD, Intel)"
+    echo "  - 16+ gaming tools (GameMode, MangoHud, Wine, etc.)"
+    echo "  - System optimizations and performance tweaks"
+    echo "  - Quality of life features (controllers, audio, shaders)"
+    echo "  - Drive mounting configuration"
+    echo ""
+    echo "Run without arguments to start the interactive installer."
+    echo ""
+    echo "Examples:"
+    echo "  ./$(basename "$0")           Start interactive installer"
+    echo "  ./$(basename "$0") --help    Show this help"
+    echo "  ./$(basename "$0") --version Show version"
+    echo ""
+    echo "Online usage:"
+    echo "  bash <(curl -fsSL https://raw.githubusercontent.com/Toppzi/gamelauncher/main/installer.sh)"
+    echo ""
+}
+
+# Parse command line arguments
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            -v|--version)
+                show_version
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: $1"
+                echo "Use --help for usage information."
+                exit 1
+                ;;
+        esac
+        shift
+    done
+}
+
+# Parse arguments before anything else
+parse_args "$@"
+
 # Error handling with trap instead of plain set -e
 set -Ee
 trap 'print_error "Error on line $LINENO"; exit 1' ERR
@@ -73,7 +147,7 @@ print_banner() {
     echo "  ║   ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗                      ║"
     echo "  ║   ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝                      ║"
     echo "  ║                                                               ║"
-    echo "  ║        GAME LAUNCHER INSTALLER v0.4                           ║"
+    echo "  ║        GAME LAUNCHER INSTALLER v1.0                           ║"
     echo "  ║                                                               ║"
     echo "  ║                    Created by Toppzi                          ║"
     echo "  ║                                                               ║"
