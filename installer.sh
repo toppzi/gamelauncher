@@ -12,6 +12,7 @@
 
 VERSION="1.0"
 SCRIPT_NAME="Linux Game Launcher Installer"
+SCRIPT_VERSION="1.0"
 
 # Show version
 show_version() {
@@ -223,6 +224,18 @@ check_dependencies() {
 # ============================================================================
 # SYSTEM DETECTION
 # ============================================================================
+
+check_aur_helper() {
+    if command -v yay &> /dev/null; then
+        AUR_HELPER="yay"
+        return 0
+    elif command -v paru &> /dev/null; then
+        AUR_HELPER="paru"
+        return 0
+    else
+        return 1
+    fi
+}
 
 detect_distro() {
     if [[ -f /etc/os-release ]]; then
@@ -729,6 +742,18 @@ remove_mount_config() {
     local index=$1
     local new_configs=()
     
+    # Validate that index is numeric
+    if ! [[ "$index" =~ ^[0-9]+$ ]]; then
+        print_error "Invalid mount index: $index"
+        return 1
+    fi
+    
+    # Validate that index is within bounds
+    if [[ $index -ge ${#MOUNT_CONFIGS[@]} ]]; then
+        print_error "Mount index out of range: $index"
+        return 1
+    fi
+    
     for i in "${!MOUNT_CONFIGS[@]}"; do
         if [[ $i -ne $index ]]; then
             new_configs+=("${MOUNT_CONFIGS[$i]}")
@@ -736,6 +761,7 @@ remove_mount_config() {
     done
     
     MOUNT_CONFIGS=("${new_configs[@]}")
+    return 0
 }
 
 drives_menu() {
@@ -823,9 +849,13 @@ drives_menu() {
                     echo ""
                     read -rp "  Enter mount number to remove: " remove_idx
                     if [[ "$remove_idx" =~ ^[0-9]+$ ]] && [[ $remove_idx -ge 1 ]] && [[ $remove_idx -le ${#MOUNT_CONFIGS[@]} ]]; then
-                        remove_mount_config $((remove_idx - 1))
-                        print_success "Mount configuration removed."
-                        press_enter
+                        if remove_mount_config $((remove_idx - 1)); then
+                            print_success "Mount configuration removed."
+                            press_enter
+                        else
+                            print_error "Failed to remove mount configuration."
+                            press_enter
+                        fi
                     else
                         print_warning "Invalid selection."
                         press_enter
@@ -1941,8 +1971,7 @@ install_opensuse() {
 # UPDATE CHECKER
 # ============================================================================
 
-SCRIPT_VERSION="0.4"
-UPDATE_URL="https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller.sh"
+UPDATE_URL="https://raw.githubusercontent.com/Toppzi/gamelauncher/main/installer.sh"
 
 check_for_updates() {
     print_banner
