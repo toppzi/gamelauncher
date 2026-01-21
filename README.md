@@ -4,7 +4,7 @@ A simple, interactive terminal tool for installing game launchers, graphics driv
 
 Created by **Toppzi**
 
-## Version 0.4 Features
+## Version 1.0 Features
 
 - **10 Game Launchers**: Steam, Lutris, Heroic, Bottles, ProtonPlus, GameHub, Minigalaxy, itch.io, RetroArch, Pegasus
 - **16+ Gaming Tools**: GameMode, MangoHud, Steam Tinker Launch, AntiMicroX, GPU Screen Recorder, and more
@@ -16,6 +16,7 @@ Created by **Toppzi**
 - **Drive Mounting**: Automatic fstab configuration for game library drives
 - **Enhanced System Detection**: Displays kernel version and GPU driver version
 - **Back Navigation**: Navigate backward through all menus with `b` key
+- **Command Line Options**: `--help` and `--version` flags for quick reference
 
 ## Supported Distributions
 
@@ -96,26 +97,29 @@ Created by **Toppzi**
 
 ### Quick Start
 
-
+```bash
 # Download the script
-```bash
-curl -O https://raw.githubusercontent.com/Toppzi/gameinstaller/main/installer.sh
-```
+curl -O https://raw.githubusercontent.com/Toppzi/gamelauncher/main/installer.sh
+
 # Make it executable
-```bash
 chmod +x installer.sh
-```
+
 # Run it
-```bash
 ./installer.sh
 ```
 
 ### Alternative (wget)
 
 ```bash
-wget https://raw.githubusercontent.com/Toppzi/gameinstaller/main/installer.sh
+wget https://raw.githubusercontent.com/Toppzi/gamelauncher/main/installer.sh
 chmod +x installer.sh
 ./installer.sh
+```
+
+### One-liner (run directly)
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Toppzi/gamelauncher/main/installer.sh)
 ```
 
 ## Usage
@@ -158,7 +162,7 @@ chmod +x installer.sh
   ║   ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗                      ║
   ║   ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝                      ║
   ║                                                               ║
-  ║        GAME LAUNCHER INSTALLER v0.4                           ║
+  ║        GAME LAUNCHER INSTALLER v1.0                           ║
   ║                                                               ║
   ║                    Created by Toppzi                          ║
   ║                                                               ║
@@ -203,6 +207,11 @@ chmod +x installer.sh
 - Use ProtonUp-Qt to install and manage Proton-GE versions
 
 ## Changelog
+
+### v1.0
+- Added `--help` and `--version` command line flags
+- Added one-liner installation support
+- Stable release with all core features complete
 
 ### v0.4
 - Added back navigation (`b` key) to all menus
