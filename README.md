@@ -14,14 +14,16 @@ Created by **Toppzi**
 - **Performance Tweaks (Advanced)**: Gaming kernels, ZRAM, vm.max_map_count, file limits
 - **Quality of Life**: Controller support, low-latency audio, shader cache, Protontricks
 - **Drive Mounting**: Automatic fstab configuration for game library drives
+- **Enhanced System Detection**: Displays kernel version and GPU driver version
+- **Back Navigation**: Navigate backward through all menus with `b` key
 
 ## Supported Distributions
 
 | Family | Distributions |
 |--------|---------------|
-| **Arch** | Arch Linux, Manjaro, EndeavourOS, Garuda, ArcoLinux |
-| **Debian** | Debian, Ubuntu, Pop!_OS, Linux Mint, Elementary, Zorin |
-| **Fedora** | Fedora, Nobara, Ultramarine |
+| **Arch** | Arch Linux, Manjaro, EndeavourOS, Garuda, ArcoLinux, CachyOS |
+| **Debian** | Debian, Ubuntu, Pop!_OS, Linux Mint, Elementary, Zorin, PikaOS |
+| **Fedora** | Fedora, Nobara, Ultramarine, Bazzite |
 | **openSUSE** | openSUSE Tumbleweed, openSUSE Leap |
 
 ## Available Software
@@ -49,8 +51,10 @@ Created by **Toppzi**
 - GameMode (CPU/GPU optimizations)
 - MangoHud (performance overlay)
 - GOverlay (MangoHud GUI)
-- Proton-GE (custom Proton builds via ProtonUp-Qt)
-- Wine & Winetricks
+- ProtonUp-Qt (Proton/Wine version manager)
+- Proton-GE (custom Proton builds)
+- Wine & Wine Dependencies (full 32-bit prerequisites)
+- Winetricks (Wine helper scripts)
 - DXVK (DirectX to Vulkan)
 - vkBasalt (post-processing)
 - CoreCtrl (GPU control panel)
@@ -78,6 +82,7 @@ Created by **Toppzi**
 - **Low-Latency Audio**: PipeWire configuration for gaming
 - **Shader Cache**: Configure Mesa and Steam shader cache directories
 - **Protontricks**: Winetricks for Proton games
+- **VRR/FreeSync**: Variable refresh rate configuration for AMD/NVIDIA
 
 ### Drive Mounting
 - Auto-detect unmounted drives and partitions
@@ -94,47 +99,55 @@ Created by **Toppzi**
 
 # Download the script
 ```bash
-curl -O https://raw.githubusercontent.com/Toppzi/gameinstaller/main/gameinstaller.sh
+curl -O https://raw.githubusercontent.com/Toppzi/gameinstaller/main/installer.sh
 ```
 # Make it executable
 ```bash
-chmod +x gameinstaller.sh
+chmod +x installer.sh
 ```
 # Run it
 ```bash
-./gameinstaller.sh
+./installer.sh
+```
+
+### Alternative (wget)
+
+```bash
+wget https://raw.githubusercontent.com/Toppzi/gameinstaller/main/installer.sh
+chmod +x installer.sh
+./installer.sh
 ```
 
 ## Usage
 
 1. Run the script in your terminal
-2. Select mode: **Install**, **Uninstall**, or **Update Check**
-3. The script will detect your distro and GPU automatically
-4. Use the **Main Menu** to jump to any category you want to configure:
-   - Game Launchers
-   - Graphics Drivers
-   - Gaming Tools
-   - System Optimizations
-   - Performance Tweaks (advanced)
-   - Quality of Life
-   - Drive Mounting
-5. Press `r` from Main Menu to **Review & Install** your selections
-6. Confirm to start the operation
+2. Review your detected system info (distro, kernel, GPU, driver)
+3. Select mode: **Install**, **Uninstall**, or **Update Check**
+4. Select game launchers you want to install/uninstall
+5. Select graphics drivers (based on your GPU)
+6. Select additional gaming tools
+7. Configure system optimizations (install mode only)
+8. Configure performance tweaks (advanced users)
+9. Configure quality of life features
+10. Configure drive mounts (optional - for game library drives)
+11. Review your selections
+12. Confirm to start the operation
 
 ### Navigation
 
 | Key | Action |
 |-----|--------|
-| `1-9` | Toggle selection / Select category |
-| `a` | Select all (in category menus) |
-| `n` | Select none (in category menus) |
-| `r` | Review & Install (main menu) / Remove mount (drive menu) |
-| `b` | Back to Main Menu |
-| `m` | Change mode (Install/Uninstall) |
+| `1-9` | Toggle selection / Select drive |
+| `a` | Select all |
+| `n` | Select none |
+| `r` | Remove configured mount (in drive menu) |
+| `c` | Continue to next menu |
+| `b` | Go back to previous menu |
 | `q` | Quit |
 
 ## Screenshots
 
+### Banner
 ```
   ╔═══════════════════════════════════════════════════════════════╗
   ║                                                               ║
@@ -150,6 +163,20 @@ chmod +x gameinstaller.sh
   ║                    Created by Toppzi                          ║
   ║                                                               ║
   ╚═══════════════════════════════════════════════════════════════╝
+```
+
+### System Info
+```
+┌─────────────────────────────────────────┐
+│           SYSTEM INFORMATION            │
+├─────────────────────────────────────────┤
+│  Distribution:   Arch Linux             │
+│  Family:         arch                   │
+│  Package Manager: pacman                │
+│  Kernel:         6.7.0-zen1-1-zen       │
+│  GPU Vendor:     AMD                    │
+│  GPU Driver:     Mesa 24.0.1            │
+└─────────────────────────────────────────┘
 ```
 
 ## Requirements
@@ -173,15 +200,22 @@ chmod +x gameinstaller.sh
 - Use `gamemoderun %command%` for GameMode CPU/GPU optimizations
 - Combine both: `gamemoderun mangohud %command%`
 - Run Steam Tinker Launch from Steam to customize individual games
+- Use ProtonUp-Qt to install and manage Proton-GE versions
 
 ## Changelog
 
 ### v0.4
-- **New category-based navigation** - jump directly to any section from Main Menu
+- Added back navigation (`b` key) to all menus
+- Enhanced system detection with kernel version and GPU driver version display
 - Added Performance Tweaks menu with advanced options (gaming kernels, ZRAM, vm.max_map_count, file limits)
-- Added Quality of Life menu (controller support, low-latency audio, shader cache, Protontricks)
+- Added Quality of Life menu (controller support, low-latency audio, shader cache, Protontricks, VRR/FreeSync)
+- Added ProtonUp-Qt for Proton/Wine version management
+- Added Wine Dependencies option for full 32-bit prerequisites
+- Added Bazzite, CachyOS, and PikaOS distribution support
 - Added warning labels for advanced options
+- Improved menu navigation flow with consistent c/b/q options
 - Fixed drive detection for unmounted partitions
+- Improved GPU driver detection for NVIDIA, AMD, and Intel
 
 ### v0.3
 - Added RetroArch and Pegasus game launchers
@@ -208,3 +242,11 @@ MIT License - Feel free to use, modify, and distribute.
 ## Contributing
 
 Pull requests are welcome! Feel free to submit issues or feature requests.
+
+## Support
+
+If you encounter any issues:
+1. Make sure you're running the latest version
+2. Check that your distribution is supported
+3. Run with `bash -x installer.sh` for debug output
+4. Open an issue on GitHub with your distro and error message
