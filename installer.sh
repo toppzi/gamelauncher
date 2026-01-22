@@ -409,7 +409,7 @@ launcher_menu() {
         show_system_info
         
         echo -e "${CYAN}══════════════════════════════════════════${NC}"
-        echo -e "${CYAN}        GAME LAUNCHERS SELECTION          ${NC}"
+        echo -e "${CYAN}      GAME LAUNCHERS SELECTION              ${NC}"
         echo -e "${CYAN}══════════════════════════════════════════${NC}"
         echo ""
         echo "  Select launchers to install (enter number to toggle):"
@@ -426,7 +426,7 @@ launcher_menu() {
         echo -e " 10) $(show_checkbox "${LAUNCHERS[pegasus]}")  Pegasus        - Game collection organizer"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to Drivers${NC}"
+        echo -e "  ${GREEN}c) Continue to Additional Tools${NC}"
         echo -e "  ${YELLOW}b) Back to Main Menu${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
@@ -467,7 +467,7 @@ driver_menu() {
         show_system_info
         
         echo -e "${CYAN}══════════════════════════════════════════${NC}"
-        echo -e "${CYAN}        GRAPHICS DRIVERS SELECTION        ${NC}"
+        echo -e "${CYAN}    GRAPHICS DRIVERS SELECTION             ${NC}"
         echo -e "${CYAN}══════════════════════════════════════════${NC}"
         echo ""
         
@@ -498,8 +498,8 @@ driver_menu() {
         fi
         
         echo ""
-        echo -e "  ${GREEN}c) Continue to Tools${NC}"
-        echo -e "  ${YELLOW}b) Back to Launchers${NC}"
+        echo -e "  ${GREEN}c) Continue to System Optimization${NC}"
+        echo -e "  ${YELLOW}b) Back to Quality of Life${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -551,7 +551,7 @@ tools_menu() {
         show_system_info
         
         echo -e "${CYAN}══════════════════════════════════════════${NC}"
-        echo -e "${CYAN}        ADDITIONAL TOOLS SELECTION        ${NC}"
+        echo -e "${CYAN}     ADDITIONAL TOOLS SELECTION            ${NC}"
         echo -e "${CYAN}══════════════════════════════════════════${NC}"
         echo ""
         echo "  Select additional gaming tools:"
@@ -577,8 +577,8 @@ tools_menu() {
         echo -e " 19) $(show_checkbox "${TOOLS[gpu_recorder]}")  GPU Screen Rec    - Low-overhead recording"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to System Optimization${NC}"
-        echo -e "  ${YELLOW}b) Back to Drivers${NC}"
+        echo -e "  ${GREEN}c) Continue to Quality of Life${NC}"
+        echo -e "  ${YELLOW}b) Back to Game Launchers${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -825,7 +825,7 @@ drives_menu() {
         echo ""
         echo -e "  ${CYAN}Enter drive number (1-${#AVAILABLE_DRIVES[@]}) to configure${NC}"
         echo -e "  ${GREEN}c) Continue to Review${NC}"
-        echo -e "  ${YELLOW}b) Back to Tools${NC}"
+        echo -e "  ${YELLOW}b) Back to Performance Tweaks${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -896,7 +896,7 @@ optimization_menu() {
         show_system_info
         
         echo -e "${CYAN}══════════════════════════════════════════${NC}"
-        echo -e "${CYAN}        SYSTEM OPTIMIZATION               ${NC}"
+        echo -e "${CYAN}       SYSTEM OPTIMIZATION                ${NC}"
         echo -e "${CYAN}══════════════════════════════════════════${NC}"
         echo ""
         echo "  Current System Settings:"
@@ -912,8 +912,8 @@ optimization_menu() {
         echo -e "  3) $(show_checkbox "${OPTIMIZATIONS[io_scheduler]}")  I/O Scheduler    - Set to 'mq-deadline' or 'none'"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
-        echo -e "  ${YELLOW}b) Back to Tools${NC}"
+        echo -e "  ${GREEN}c) Continue to Performance Tweaks${NC}"
+        echo -e "  ${YELLOW}b) Back to Graphics Drivers${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -1036,8 +1036,8 @@ performance_tweaks_menu() {
         echo -e "  4) $(show_checkbox "${PERFORMANCE_TWEAKS[file_limits]}")  File Limits        - Raise ulimits for games"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to Quality of Life${NC}"
-        echo -e "  ${YELLOW}b) Back to Optimizations${NC}"
+        echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
+        echo -e "  ${YELLOW}b) Back to System Optimization${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -1184,7 +1184,7 @@ qol_menu() {
         show_system_info
         
         echo -e "${CYAN}══════════════════════════════════════════${NC}"
-        echo -e "${CYAN}         QUALITY OF LIFE                  ${NC}"
+        echo -e "${CYAN}       QUALITY OF LIFE SETTINGS            ${NC}"
         echo -e "${CYAN}══════════════════════════════════════════${NC}"
         echo ""
         echo -e "  1) $(show_checkbox "${QOL[controller_support]}")  Controller Support   - Xbox/PlayStation controller drivers"
@@ -1194,8 +1194,8 @@ qol_menu() {
         echo -e "  5) $(show_checkbox "${QOL[vrr_freesync]}")  VRR/FreeSync         - Variable refresh rate setup"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
-        echo -e "  ${GREEN}c) Continue to Drive Mounting${NC}"
-        echo -e "  ${YELLOW}b) Back to Performance Tweaks${NC}"
+        echo -e "  ${GREEN}c) Continue to Graphics Drivers${NC}"
+        echo -e "  ${YELLOW}b) Back to Additional Tools${NC}"
         echo -e "  ${RED}q) Quit${NC}"
         echo ""
         read -rp "  Enter choice: " choice
@@ -2304,7 +2304,7 @@ main() {
         case "$current_menu" in
             launcher)
                 if launcher_menu; then
-                    current_menu="driver"
+                    current_menu="tools"
                 else
                     current_menu="main"
                 fi
@@ -2314,50 +2314,50 @@ main() {
                     current_menu="launcher"
                 fi
                 ;;
-            driver)
-                if driver_menu; then
-                    current_menu="tools"
+            tools)
+                if tools_menu; then
+                    current_menu="qol"
                 else
                     current_menu="launcher"
                 fi
                 ;;
-            tools)
-                if tools_menu; then
+            qol)
+                if qol_menu; then
+                    current_menu="driver"
+                else
+                    current_menu="tools"
+                fi
+                ;;
+            driver)
+                if driver_menu; then
                     if [[ "$OPERATION_MODE" == "install" ]]; then
                         current_menu="optimization"
                     else
                         current_menu="review"
                     fi
                 else
-                    current_menu="driver"
+                    current_menu="qol"
                 fi
                 ;;
             optimization)
                 if optimization_menu; then
                     current_menu="performance"
                 else
-                    current_menu="tools"
+                    current_menu="driver"
                 fi
                 ;;
             performance)
                 if performance_tweaks_menu; then
-                    current_menu="qol"
-                else
-                    current_menu="optimization"
-                fi
-                ;;
-            qol)
-                if qol_menu; then
                     current_menu="drives"
                 else
-                    current_menu="performance"
+                    current_menu="optimization"
                 fi
                 ;;
             drives)
                 if drives_menu; then
                     current_menu="review"
                 else
-                    current_menu="qol"
+                    current_menu="performance"
                 fi
                 ;;
             review)
@@ -2369,11 +2369,7 @@ main() {
                     fi
                     exit 0
                 else
-                    if [[ "$OPERATION_MODE" == "install" ]]; then
-                        current_menu="drives"
-                    else
-                        current_menu="tools"
-                    fi
+                    current_menu="drives"
                 fi
                 ;;
         esac
