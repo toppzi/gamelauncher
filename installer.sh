@@ -111,7 +111,7 @@ declare -A TOOLS
 # Ordered keys for consistent menu display
 LAUNCHER_KEYS=(steam lutris heroic bottles protonplus gamehub minigalaxy itch retroarch pegasus)
 DRIVER_KEYS=(nvidia nvidia_32bit mesa vulkan_amd vulkan_intel amd_32bit intel_32bit)
-TOOL_KEYS=(gamemode mangohud goverlay protonupqt protonge wine wine_deps winetricks dxvk vkbasalt corectrl gamescope discord obs flatseal steamtinker antimicrox gpu_recorder)
+TOOL_KEYS=(gamemode mangohud goverlay protonupqt protonge wine wine_deps winetricks dxvk vkbasalt corectrl gamescope discord vesktop obs flatseal steamtinker antimicrox gpu_recorder)
 
 # System optimization settings
 declare -A OPTIMIZATIONS
@@ -568,12 +568,13 @@ tools_menu() {
         echo -e " 10) $(show_checkbox "${TOOLS[vkbasalt]}")  vkBasalt          - Vulkan post-processing"
         echo -e " 11) $(show_checkbox "${TOOLS[corectrl]}")  CoreCtrl          - GPU control panel"
         echo -e " 12) $(show_checkbox "${TOOLS[gamescope]}")  Gamescope         - Micro-compositor"
-        echo -e " 13) $(show_checkbox "${TOOLS[discord]}")  Discord           - Voice & Text Chat"
-        echo -e " 14) $(show_checkbox "${TOOLS[obs]}")  OBS Studio        - Streaming/Recording"
-        echo -e " 15) $(show_checkbox "${TOOLS[flatseal]}")  Flatseal          - Flatpak Permissions"
-        echo -e " 16) $(show_checkbox "${TOOLS[steamtinker]}")  Steam Tinker      - Steam game tweaking"
-        echo -e " 17) $(show_checkbox "${TOOLS[antimicrox]}")  AntiMicroX        - Controller remapping"
-        echo -e " 18) $(show_checkbox "${TOOLS[gpu_recorder]}")  GPU Screen Rec    - Low-overhead recording"
+        echo -e " 13) $(show_checkbox "${TOOLS[discord]}")  Discord           - Official Discord client"
+        echo -e " 14) $(show_checkbox "${TOOLS[vesktop]}")  Vesktop           - Discord mod (better performance)"
+        echo -e " 15) $(show_checkbox "${TOOLS[obs]}")  OBS Studio        - Streaming/Recording"
+        echo -e " 16) $(show_checkbox "${TOOLS[flatseal]}")  Flatseal          - Flatpak Permissions"
+        echo -e " 17) $(show_checkbox "${TOOLS[steamtinker]}")  Steam Tinker      - Steam game tweaking"
+        echo -e " 18) $(show_checkbox "${TOOLS[antimicrox]}")  AntiMicroX        - Controller remapping"
+        echo -e " 19) $(show_checkbox "${TOOLS[gpu_recorder]}")  GPU Screen Rec    - Low-overhead recording"
         echo ""
         echo -e "  ${YELLOW}a) Select All    n) Select None${NC}"
         echo -e "  ${GREEN}c) Continue to System Optimization${NC}"
@@ -596,11 +597,12 @@ tools_menu() {
             11) toggle_selection TOOLS corectrl ;;
             12) toggle_selection TOOLS gamescope ;;
             13) toggle_selection TOOLS discord ;;
-            14) toggle_selection TOOLS obs ;;
-            15) toggle_selection TOOLS flatseal ;;
-            16) toggle_selection TOOLS steamtinker ;;
-            17) toggle_selection TOOLS antimicrox ;;
-            18) toggle_selection TOOLS gpu_recorder ;;
+            14) toggle_selection TOOLS vesktop ;;
+            15) toggle_selection TOOLS obs ;;
+            16) toggle_selection TOOLS flatseal ;;
+            17) toggle_selection TOOLS steamtinker ;;
+            18) toggle_selection TOOLS antimicrox ;;
+            19) toggle_selection TOOLS gpu_recorder ;;
             a|A)
                 for key in "${TOOL_KEYS[@]}"; do
                     TOOLS[$key]="1"
@@ -1653,6 +1655,7 @@ install_arch() {
     [[ "${TOOLS[protonupqt]}" == "1" ]] && aur_packages+=(protonup-qt-bin)
     [[ "${TOOLS[protonge]}" == "1" ]] && aur_packages+=(proton-ge-custom-bin)
     [[ "${TOOLS[vkbasalt]}" == "1" ]] && aur_packages+=(vkbasalt lib32-vkbasalt)
+    [[ "${TOOLS[vesktop]}" == "1" ]] && aur_packages+=(vesktop-bin)
     [[ "${TOOLS[steamtinker]}" == "1" ]] && aur_packages+=(steamtinkerlaunch)
     [[ "${TOOLS[gpu_recorder]}" == "1" ]] && aur_packages+=(gpu-screen-recorder-git)
     
@@ -1786,6 +1789,7 @@ install_debian() {
     [[ "${TOOLS[goverlay]}" == "1" ]] && flatpak_packages+=(io.github.benjamimgois.goverlay)
     [[ "${TOOLS[corectrl]}" == "1" ]] && flatpak_packages+=(org.corectrl.CoreCtrl)
     [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
+    [[ "${TOOLS[vesktop]}" == "1" ]] && flatpak_packages+=(sh.ppy.Vesktop)
     [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
     [[ "${TOOLS[steamtinker]}" == "1" ]] && flatpak_packages+=(com.github.Matoking.SteamTinkerLaunch)
     [[ "${TOOLS[antimicrox]}" == "1" ]] && flatpak_packages+=(io.github.antimicrox.antimicrox)
@@ -1870,6 +1874,7 @@ install_fedora() {
     [[ "${LAUNCHERS[pegasus]}" == "1" ]] && flatpak_packages+=(org.pegasus_frontend.Pegasus)
     [[ "${TOOLS[protonupqt]}" == "1" ]] && flatpak_packages+=(net.davidotek.pupgui2)
     [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
+    [[ "${TOOLS[vesktop]}" == "1" ]] && flatpak_packages+=(sh.ppy.Vesktop)
     [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
     [[ "${TOOLS[steamtinker]}" == "1" ]] && flatpak_packages+=(com.github.Matoking.SteamTinkerLaunch)
     [[ "${TOOLS[gpu_recorder]}" == "1" ]] && flatpak_packages+=(com.dec05eba.gpu_screen_recorder)
@@ -1941,8 +1946,11 @@ install_opensuse() {
     [[ "${TOOLS[goverlay]}" == "1" ]] && flatpak_packages+=(io.github.benjamimgois.goverlay)
     [[ "${TOOLS[corectrl]}" == "1" ]] && flatpak_packages+=(org.corectrl.CoreCtrl)
     [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
+    [[ "${TOOLS[vesktop]}" == "1" ]] && flatpak_packages+=(sh.ppy.Vesktop)
     [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
     [[ "${TOOLS[steamtinker]}" == "1" ]] && flatpak_packages+=(com.github.Matoking.SteamTinkerLaunch)
+    [[ "${TOOLS[antimicrox]}" == "1" ]] && flatpak_packages+=(io.github.antimicrox.antimicrox)
+    [[ "${TOOLS[gpu_recorder]}" == "1" ]] && flatpak_packages+=(com.dec05eba.gpu_screen_recorder)
     [[ "${TOOLS[antimicrox]}" == "1" ]] && flatpak_packages+=(io.github.antimicrox.antimicrox)
     [[ "${TOOLS[gpu_recorder]}" == "1" ]] && flatpak_packages+=(com.dec05eba.gpu_screen_recorder)
     
@@ -2114,6 +2122,7 @@ run_uninstallation() {
     [[ "${TOOLS[goverlay]}" == "1" ]] && flatpak_packages+=(io.github.benjamimgois.goverlay)
     [[ "${TOOLS[corectrl]}" == "1" ]] && flatpak_packages+=(org.corectrl.CoreCtrl)
     [[ "${TOOLS[discord]}" == "1" ]] && flatpak_packages+=(com.discordapp.Discord)
+    [[ "${TOOLS[vesktop]}" == "1" ]] && flatpak_packages+=(sh.ppy.Vesktop)
     [[ "${TOOLS[flatseal]}" == "1" ]] && flatpak_packages+=(com.github.tchx84.Flatseal)
     [[ "${TOOLS[steamtinker]}" == "1" ]] && flatpak_packages+=(com.github.Matoking.SteamTinkerLaunch)
     [[ "${TOOLS[antimicrox]}" == "1" ]] && flatpak_packages+=(io.github.antimicrox.antimicrox)
