@@ -95,32 +95,55 @@ Created by **Toppzi**
 
 ## Installation
 
-### Quick Start
+### Quick Start (clone and run)
+
+The installer is split into `installer.sh` and `lib/*.sh`. Run from the repo directory:
 
 ```bash
-# Download the script
-curl -O https://raw.githubusercontent.com/Toppzi/gamelauncher/main/installer.sh
-
-# Make it executable
-chmod +x installer.sh
-
-# Run it
+git clone https://github.com/Toppzi/gamelauncher.git
+cd gamelauncher
 ./installer.sh
 ```
 
-### Alternative (wget)
+### Single-file build (curl / one-liner)
+
+For a self-contained script (e.g. to download or run via one-liner), build it first:
 
 ```bash
-wget https://raw.githubusercontent.com/Toppzi/gamelauncher/main/installer.sh
-chmod +x installer.sh
-./installer.sh
+git clone https://github.com/Toppzi/gamelauncher.git
+cd gamelauncher
+./build.sh
+# Use the generated file:
+./installer-standalone.sh
 ```
 
-### One-liner (run directly)
+Or download the pre-built standalone installer (when available via Releases):
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Toppzi/gamelauncher/main/installer.sh)
+curl -OL https://github.com/Toppzi/gamelauncher/releases/latest/download/installer-standalone.sh
+chmod +x installer-standalone.sh
+./installer-standalone.sh
 ```
+
+### One-liner (requires standalone installer)
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Toppzi/gamelauncher/main/installer-standalone.sh)
+```
+
+*The modular `installer.sh` sources `lib/` and must be run from the repo.*
+
+### Project structure
+
+- `installer.sh` — entry point; sources `lib/*.sh`
+- `lib/utils.sh` — helpers (print_*, check_root, check_dependencies)
+- `lib/detection.sh` — distro, GPU, kernel detection
+- `lib/drives.sh` — drive detection and mount configuration
+- `lib/optimization.sh` — system optimizations, performance tweaks, QoL, mount apply
+- `lib/install.sh` — per-distro install/uninstall, update checker
+- `lib/menus.sh` — all TUI menus
+- `lib/main.sh` — init, main menu, main loop
+- `build.sh` — builds `installer-standalone.sh` for single-file use
 
 ## Usage
 
