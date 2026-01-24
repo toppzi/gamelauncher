@@ -18,21 +18,20 @@ get_current_io_scheduler() {
 
 apply_optimizations() {
     local applied=false
+    [[ "${DRY_RUN:-0}" -eq 1 ]] && return 0
     
     if [[ "${OPTIMIZATIONS[cpu_governor]}" == "1" ]]; then
         print_info "Setting CPU governor to 'performance'..."
+        log_msg "Apply: CPU governor performance"
         
-        # Check if cpupower is available
         if command -v cpupower &> /dev/null; then
             sudo cpupower frequency-set -g performance || true
         else
-            # Direct sysfs method
             for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
                 echo "performance" | sudo tee "$cpu" > /dev/null 2>&1 || true
             done
         fi
         
-        # Make persistent via sysctl or service
         if [[ -d /etc/tmpfiles.d ]]; then
             echo 'w /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor - - - - performance' | \
                 sudo tee /etc/tmpfiles.d/cpu-governor.conf > /dev/null
@@ -44,11 +43,13 @@ apply_optimizations() {
     
     if [[ "${OPTIMIZATIONS[swappiness]}" == "1" ]]; then
         print_info "Setting swappiness to 10..."
+        log_msg "Apply: swappiness 10"
+        if [[ -n "${BACKUP_DIR:-}" && -f /etc/sysctl.conf ]]; then
+            sudo cp /etc/sysctl.conf "${BACKUP_DIR}/sysctl.conf" 2>/dev/null && \
+                sudo chown "${USER}:${USER}" "${BACKUP_DIR}/sysctl.conf" 2>/dev/null || true
+        fi
         
-        # Apply immediately
         sudo sysctl -w vm.swappiness=10 > /dev/null 2>&1 || true
-        
-        # Make persistent
         if ! grep -q "vm.swappiness" /etc/sysctl.conf 2>/dev/null; then
             echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.conf > /dev/null
         else
@@ -61,14 +62,13 @@ apply_optimizations() {
     
     if [[ "${OPTIMIZATIONS[io_scheduler]}" == "1" ]]; then
         print_info "Optimizing I/O scheduler..."
+        log_msg "Apply: I/O scheduler udev rule"
         
-        # Create udev rule for SSDs (none) and HDDs (mq-deadline)
         local udev_rule='ACTION=="add|change", KERNEL=="sd[a-z]|nvme[0-9]*", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
 ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="mq-deadline"'
         
         echo "$udev_rule" | sudo tee /etc/udev/rules.d/60-io-scheduler.rules > /dev/null
         
-        # Apply immediately to current devices
         for device in /sys/block/sd* /sys/block/nvme*; do
             [[ -d "$device" ]] || continue
             local rotational
@@ -95,6 +95,7 @@ ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue
 
 apply_performance_tweaks() {
     local applied=false
+    [[ "${DRY_RUN:-0}" -eq 1 ]] && return 0
     
     # Gaming Kernel
     if [[ "${PERFORMANCE_TWEAKS[gaming_kernel]}" == "1" ]]; then
@@ -208,6 +209,7 @@ EOF
 
 apply_qol() {
     local applied=false
+    [[ "${DRY_RUN:-0}" -eq 1 ]] && return 0
     
     # Controller Support
     if [[ "${QOL[controller_support]}" == "1" ]]; then
@@ -367,12 +369,18 @@ apply_mount_configs() {
     if [[ ${#MOUNT_CONFIGS[@]} -eq 0 ]]; then
         return 0
     fi
+    [[ "${DRY_RUN:-0}" -eq 1 ]] && return 0
     
     print_info "Configuring drive mounts..."
+    log_msg "Apply: mount configs"
     echo ""
     
-    # Backup fstab
-    sudo cp /etc/fstab /etc/fstab.backup.$(date +%Y%m%d%H%M%S) || true
+    local fstab_backup="/etc/fstab.backup.$(date +%Y%m%d%H%M%S)"
+    sudo cp /etc/fstab "$fstab_backup" || true
+    if [[ -n "${BACKUP_DIR:-}" ]]; then
+        sudo cp /etc/fstab "${BACKUP_DIR}/fstab" 2>/dev/null && \
+            sudo chown "${USER}:${USER}" "${BACKUP_DIR}/fstab" 2>/dev/null || true
+    fi
     print_success "Backed up /etc/fstab"
     
     for config in "${MOUNT_CONFIGS[@]}"; do
@@ -434,4 +442,76 @@ apply_mount_configs() {
     done
     
     echo ""
+}
+
+# ============================================================================
+# REVERT OPTIMIZATIONS (on uninstall)
+# ============================================================================
+
+revert_optimizations() {
+    local reverted=false
+    
+    if [[ -f /etc/tmpfiles.d/cpu-governor.conf ]]; then
+        print_info "Reverting CPU governor config..."
+        sudo rm -f /etc/tmpfiles.d/cpu-governor.conf
+        log_msg "Removed /etc/tmpfiles.d/cpu-governor.conf"
+        reverted=true
+    fi
+    
+    if grep -q "vm.swappiness" /etc/sysctl.conf 2>/dev/null; then
+        print_info "Reverting swappiness..."
+        sudo sed -i '/vm\.swappiness/d' /etc/sysctl.conf
+        sudo sysctl -w vm.swappiness=60 > /dev/null 2>&1 || true
+        log_msg "Reverted vm.swappiness"
+        reverted=true
+    fi
+    
+    if [[ -f /etc/udev/rules.d/60-io-scheduler.rules ]]; then
+        print_info "Removing I/O scheduler udev rule..."
+        sudo rm -f /etc/udev/rules.d/60-io-scheduler.rules
+        log_msg "Removed 60-io-scheduler.rules"
+        reverted=true
+    fi
+    
+    if [[ -f /etc/sysctl.d/99-max-map-count.conf ]]; then
+        print_info "Removing vm.max_map_count override..."
+        sudo rm -f /etc/sysctl.d/99-max-map-count.conf
+        log_msg "Removed 99-max-map-count.conf"
+        reverted=true
+    fi
+    
+    if [[ -f /etc/security/limits.d/99-gaming.conf ]]; then
+        print_info "Removing gaming file limits..."
+        sudo rm -f /etc/security/limits.d/99-gaming.conf
+        log_msg "Removed 99-gaming.conf"
+        reverted=true
+    fi
+    
+    if [[ "$reverted" == true ]]; then
+        print_success "Optimizations reverted."
+        echo ""
+    fi
+}
+
+# ============================================================================
+# BACKUP / RESTORE
+# ============================================================================
+
+run_restore() {
+    local dir="$1"
+    [[ -z "$dir" ]] && { print_error "Restore directory required."; return 1; }
+    [[ ! -d "$dir" ]] && { print_error "Not a directory: $dir"; return 1; }
+    
+    print_info "Restoring from $dir..."
+    log_msg "Restore from $dir"
+    
+    [[ -f "$dir/sysctl.conf" ]] && sudo cp "$dir/sysctl.conf" /etc/sysctl.conf && print_success "Restored /etc/sysctl.conf"
+    [[ -f "$dir/fstab" ]] && sudo cp "$dir/fstab" /etc/fstab && print_success "Restored /etc/fstab"
+    [[ -f "$dir/cpu-governor.conf" ]] && sudo cp "$dir/cpu-governor.conf" /etc/tmpfiles.d/ && print_success "Restored cpu-governor"
+    [[ -f "$dir/60-io-scheduler.rules" ]] && sudo cp "$dir/60-io-scheduler.rules" /etc/udev/rules.d/ && print_success "Restored udev io-scheduler"
+    [[ -f "$dir/99-max-map-count.conf" ]] && sudo cp "$dir/99-max-map-count.conf" /etc/sysctl.d/ && print_success "Restored max_map_count"
+    [[ -f "$dir/99-gaming.conf" ]] && sudo cp "$dir/99-gaming.conf" /etc/security/limits.d/ && print_success "Restored limits"
+    
+    print_success "Restore complete. Reboot or re-login for some changes to take effect."
+    press_enter
 }

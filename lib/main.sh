@@ -71,19 +71,52 @@ main_menu() {
 
 main() {
     check_root
+    
+    # Restore-from-backup mode
+    if [[ -n "${RESTORE_BACKUP:-}" ]]; then
+        run_restore "$RESTORE_BACKUP"
+        exit 0
+    fi
+    
     print_banner
+    [[ -n "${LOG_FILE:-}" ]] && log_msg "Started; log=$LOG_FILE"
+    [[ "${DRY_RUN:-0}" -eq 1 ]] && print_warning "Dry-run mode: no changes will be made."
     
     print_info "Detecting system..."
+    print_verbose "Detecting distro..."
     detect_distro
+    print_verbose "Detecting GPU..."
     detect_gpu
     detect_kernel
     detect_gpu_driver
     check_dependencies
+    [[ -n "${LOG_FILE:-}" ]] && log_msg "Detected: distro=$DISTRO family=$DISTRO_FAMILY gpu=$GPU_VENDOR"
     
     show_system_info
     press_enter
     
     init_selections
+    
+    # Non-interactive: use config, skip menus, run install/uninstall directly
+    if [[ "${NON_INTERACTIVE:-0}" -eq 1 ]]; then
+        if [[ -n "${CONFIG_FILE:-}" ]]; then
+            load_config "$CONFIG_FILE" || exit 1
+        fi
+        if [[ "${DO_UNINSTALL:-0}" -eq 1 ]]; then
+            OPERATION_MODE="uninstall"
+        else
+            OPERATION_MODE="install"
+        fi
+        if [[ "${DRY_RUN:-0}" -eq 1 ]]; then
+            print_info "Dry-run: would run $OPERATION_MODE with current config."
+        fi
+        if [[ "$OPERATION_MODE" == "install" ]]; then
+            run_installation
+        else
+            run_uninstallation
+        fi
+        exit 0
+    fi
     
     # Show main menu first
     while ! main_menu; do

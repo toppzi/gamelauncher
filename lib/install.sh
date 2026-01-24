@@ -463,49 +463,57 @@ check_for_updates() {
 run_installation() {
     print_banner
     echo ""
-    print_info "Starting installation..."
+    if [[ "${DRY_RUN:-0}" -eq 1 ]]; then
+        print_warning "Dry-run: no changes will be made."
+        echo ""
+        log_msg "Dry-run installation"
+    else
+        print_info "Starting installation..."
+        log_msg "Starting installation"
+        BACKUP_DIR="${HOME}/.cache/gamelauncher/backups/$(date +%Y%m%d-%H%M%S)"
+        mkdir -p "$BACKUP_DIR"
+        log_msg "Backup dir: $BACKUP_DIR"
+    fi
     echo ""
     
-    case "$DISTRO_FAMILY" in
-        arch)
-            install_arch
-            ;;
-        debian)
-            install_debian
-            ;;
-        fedora)
-            install_fedora
-            ;;
-        opensuse)
-            install_opensuse
-            ;;
-        *)
-            print_error "Unsupported distribution family: $DISTRO_FAMILY"
-            exit 1
-            ;;
-    esac
-    
-    # Apply system optimizations
-    apply_optimizations
-    
-    # Apply performance tweaks
-    apply_performance_tweaks
-    
-    # Apply quality of life settings
-    apply_qol
-    
-    # Apply drive mount configurations
-    apply_mount_configs
+    if [[ "${DRY_RUN:-0}" -eq 1 ]]; then
+        case "$DISTRO_FAMILY" in
+            arch) log_msg "Would run: install_arch" ; print_info "[dry-run] Would install Arch packages" ;;
+            debian) log_msg "Would run: install_debian" ; print_info "[dry-run] Would install Debian packages" ;;
+            fedora) log_msg "Would run: install_fedora" ; print_info "[dry-run] Would install Fedora packages" ;;
+            opensuse) log_msg "Would run: install_opensuse" ; print_info "[dry-run] Would install openSUSE packages" ;;
+            *) print_error "Unsupported distribution family: $DISTRO_FAMILY"; exit 1 ;;
+        esac
+        print_info "[dry-run] Would apply optimizations, performance tweaks, QoL, mount configs"
+    else
+        case "$DISTRO_FAMILY" in
+            arch) install_arch ;;
+            debian) install_debian ;;
+            fedora) install_fedora ;;
+            opensuse) install_opensuse ;;
+            *) print_error "Unsupported distribution family: $DISTRO_FAMILY"; exit 1 ;;
+        esac
+        apply_optimizations
+        apply_performance_tweaks
+        apply_qol
+        apply_mount_configs
+    fi
     
     echo ""
     echo -e "${GREEN}══════════════════════════════════════════${NC}"
-    echo -e "${GREEN}        INSTALLATION COMPLETE!            ${NC}"
-    echo -e "${GREEN}══════════════════════════════════════════${NC}"
-    echo ""
-    print_success "All selected packages have been installed!"
+    if [[ "${DRY_RUN:-0}" -eq 1 ]]; then
+        echo -e "${GREEN}        DRY-RUN COMPLETE (no changes)   ${NC}"
+        echo -e "${GREEN}══════════════════════════════════════════${NC}"
+        echo ""
+        print_success "Dry-run finished. No changes were made."
+    else
+        echo -e "${GREEN}        INSTALLATION COMPLETE!            ${NC}"
+        echo -e "${GREEN}══════════════════════════════════════════${NC}"
+        echo ""
+        print_success "All selected packages have been installed!"
+    fi
     echo ""
     
-    # Show reboot warning if drivers were installed
     if has_any_selected DRIVERS; then
         print_warning "Restart your system for driver changes to take effect!"
         echo ""
@@ -548,71 +556,80 @@ run_uninstallation() {
     [[ "${TOOLS[gpu_recorder]}" == "1" ]] && flatpak_packages+=(com.dec05eba.gpu_screen_recorder)
     [[ "${TOOLS[protonge]}" == "1" ]] && flatpak_packages+=(net.davidotek.pupgui2)
     
-    if [[ ${#flatpak_packages[@]} -gt 0 ]] && command -v flatpak &> /dev/null; then
-        print_info "Removing Flatpak packages..."
-        for pkg in "${flatpak_packages[@]}"; do
-            flatpak uninstall -y "$pkg" 2>/dev/null || true
-        done
+    if [[ "${DRY_RUN:-0}" -eq 1 ]]; then
+        log_msg "Dry-run uninstall"
+        [[ ${#flatpak_packages[@]} -gt 0 ]] && print_info "[dry-run] Would remove Flatpak: ${flatpak_packages[*]}"
+        print_info "[dry-run] Would remove native packages per distro"
+        print_info "[dry-run] Would revert optimizations"
+    else
+        log_msg "Starting uninstallation"
+        if [[ ${#flatpak_packages[@]} -gt 0 ]] && command -v flatpak &> /dev/null; then
+            print_info "Removing Flatpak packages..."
+            log_msg "Removing Flatpak: ${flatpak_packages[*]}"
+            for pkg in "${flatpak_packages[@]}"; do
+                flatpak uninstall -y "$pkg" 2>/dev/null || true
+            done
+        fi
+        
+        local packages=()
+        case "$DISTRO_FAMILY" in
+            arch)
+                [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
+                [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
+                [[ "${LAUNCHERS[bottles]}" == "1" ]] && packages+=(bottles)
+                [[ "${LAUNCHERS[retroarch]}" == "1" ]] && packages+=(retroarch)
+                [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode lib32-gamemode)
+                [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud lib32-mangohud)
+                [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine)
+                [[ "${TOOLS[discord]}" == "1" ]] && packages+=(discord)
+                [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
+                if [[ ${#packages[@]} -gt 0 ]]; then
+                    log_msg "pacman -Rns ${packages[*]}"
+                    sudo pacman -Rns --noconfirm "${packages[@]}" 2>/dev/null || true
+                fi
+                ;;
+            debian)
+                [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
+                [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
+                [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode)
+                [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
+                [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine wine64 wine32)
+                [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
+                if [[ ${#packages[@]} -gt 0 ]]; then
+                    log_msg "apt remove ${packages[*]}"
+                    sudo apt-get remove -y "${packages[@]}" 2>/dev/null || true
+                    sudo apt-get autoremove -y || true
+                fi
+                ;;
+            fedora)
+                [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
+                [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
+                [[ "${LAUNCHERS[retroarch]}" == "1" ]] && packages+=(retroarch)
+                [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode)
+                [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
+                [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine)
+                [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
+                if [[ ${#packages[@]} -gt 0 ]]; then
+                    log_msg "dnf remove ${packages[*]}"
+                    sudo dnf remove -y "${packages[@]}" 2>/dev/null || true
+                fi
+                ;;
+            opensuse)
+                [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
+                [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
+                [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode)
+                [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
+                [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine)
+                [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
+                if [[ ${#packages[@]} -gt 0 ]]; then
+                    log_msg "zypper remove ${packages[*]}"
+                    sudo zypper remove -y "${packages[@]}" 2>/dev/null || true
+                fi
+                ;;
+        esac
+        
+        revert_optimizations
     fi
-    
-    # Uninstall native packages based on distro
-    local packages=()
-    
-    case "$DISTRO_FAMILY" in
-        arch)
-            [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
-            [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
-            [[ "${LAUNCHERS[bottles]}" == "1" ]] && packages+=(bottles)
-            [[ "${LAUNCHERS[retroarch]}" == "1" ]] && packages+=(retroarch)
-            [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode lib32-gamemode)
-            [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud lib32-mangohud)
-            [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine)
-            [[ "${TOOLS[discord]}" == "1" ]] && packages+=(discord)
-            [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
-            
-            if [[ ${#packages[@]} -gt 0 ]]; then
-                sudo pacman -Rns --noconfirm "${packages[@]}" 2>/dev/null || true
-            fi
-            ;;
-        debian)
-            [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
-            [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
-            [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode)
-            [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
-            [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine wine64 wine32)
-            [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
-            
-            if [[ ${#packages[@]} -gt 0 ]]; then
-                sudo apt-get remove -y "${packages[@]}" 2>/dev/null || true
-                sudo apt-get autoremove -y || true
-            fi
-            ;;
-        fedora)
-            [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
-            [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
-            [[ "${LAUNCHERS[retroarch]}" == "1" ]] && packages+=(retroarch)
-            [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode)
-            [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
-            [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine)
-            [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
-            
-            if [[ ${#packages[@]} -gt 0 ]]; then
-                sudo dnf remove -y "${packages[@]}" 2>/dev/null || true
-            fi
-            ;;
-        opensuse)
-            [[ "${LAUNCHERS[steam]}" == "1" ]] && packages+=(steam)
-            [[ "${LAUNCHERS[lutris]}" == "1" ]] && packages+=(lutris)
-            [[ "${TOOLS[gamemode]}" == "1" ]] && packages+=(gamemode)
-            [[ "${TOOLS[mangohud]}" == "1" ]] && packages+=(mangohud)
-            [[ "${TOOLS[wine]}" == "1" ]] && packages+=(wine)
-            [[ "${TOOLS[obs]}" == "1" ]] && packages+=(obs-studio)
-            
-            if [[ ${#packages[@]} -gt 0 ]]; then
-                sudo zypper remove -y "${packages[@]}" 2>/dev/null || true
-            fi
-            ;;
-    esac
     
     echo ""
     echo -e "${GREEN}══════════════════════════════════════════${NC}"

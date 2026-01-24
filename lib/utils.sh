@@ -38,7 +38,19 @@ print_error() {
     echo -e "${RED}[✗]${NC} $1"
 }
 
+print_verbose() {
+    [[ "${VERBOSE:-0}" -eq 1 ]] && echo -e "${BLUE}[v]${NC} $1"
+}
+
+log_msg() {
+    local msg="$1"
+    [[ -n "${LOG_FILE:-}" ]] || return 0
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $msg" >> "$LOG_FILE"
+}
+
 press_enter() {
+    [[ "${NON_INTERACTIVE:-0}" -eq 1 ]] && return 0
+    [[ "${DRY_RUN:-0}" -eq 1 ]] && return 0
     echo ""
     read -rp "Press Enter to continue..."
 }
@@ -68,7 +80,13 @@ check_dependencies() {
     
     if [[ ${#missing[@]} -gt 0 ]]; then
         print_warning "Missing dependencies: ${missing[*]}"
+        if [[ "${DRY_RUN:-0}" -eq 1 ]]; then
+            print_info "[dry-run] Would install: ${missing[*]}"
+            log_msg "Would install deps: ${missing[*]}"
+            return 0
+        fi
         print_info "Installing missing dependencies..."
+        log_msg "Installing deps: ${missing[*]}"
         
         case "$DISTRO_FAMILY" in
             arch)

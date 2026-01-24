@@ -136,14 +136,52 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Toppzi/gamelauncher/main/ins
 ### Project structure
 
 - `installer.sh` — entry point; sources `lib/*.sh`
-- `lib/utils.sh` — helpers (print_*, check_root, check_dependencies)
+- `lib/utils.sh` — helpers (print_*, check_root, check_dependencies, log_msg, print_verbose)
 - `lib/detection.sh` — distro, GPU, kernel detection
 - `lib/drives.sh` — drive detection and mount configuration
-- `lib/optimization.sh` — system optimizations, performance tweaks, QoL, mount apply
+- `lib/optimization.sh` — system optimizations, performance tweaks, QoL, mount apply, revert, restore
 - `lib/install.sh` — per-distro install/uninstall, update checker
 - `lib/menus.sh` — all TUI menus
+- `lib/config.sh` — config file load/export
 - `lib/main.sh` — init, main menu, main loop
 - `build.sh` — builds `installer-standalone.sh` for single-file use
+
+### Command-line options
+
+| Option | Description |
+|--------|-------------|
+| `-h, --help` | Show help and exit |
+| `-V, --version` | Show version and exit |
+| `-n, --dry-run` | Preview actions without making changes |
+| `-v, --verbose` | Verbose output |
+| `--log[=FILE]` | Log actions to FILE (default: `~/gamelauncher-<date>.log`) |
+| `--config=FILE` | Load selections from config file |
+| `--non-interactive`, `--yes` | Run without prompts (use with `--config`; implies install) |
+| `--uninstall` | With `--non-interactive`, uninstall selected items |
+| `--restore=DIR` | Restore from backup directory |
+
+### Config file
+
+Use a config file to pre-select launchers, drivers, tools, and optimizations. Format: one `key=0` or `key=1` per line. Keys match menu options (e.g. `steam=1`, `lutris=0`, `nvidia=1`, `gamemode=1`, `cpu_governor=1`). Use with `--config=path` and `--non-interactive` for automated installs.
+
+### Dry-run, logging, and non-interactive
+
+- **Dry-run** (`-n`): run the full flow but do not install packages or change system config. Use to verify selections before applying.
+- **Logging** (`--log`): append timestamps and actions to a log file. Default path: `~/gamelauncher-YYYYMMDD-HHMMSS.log`.
+- **Non-interactive** (`--non-interactive` or `--yes`): skip all menus. Use with `--config=FILE` to install from a config, or with `--uninstall` to uninstall selected items.
+
+### Backup & Restore
+
+- **Backups**: When you run an **install**, the script creates `~/.cache/gamelauncher/backups/YYYYMMDD-HHMMSS/` and stores copies of modified files (`sysctl.conf`, `fstab`, etc.) before changing them.
+- **Restore**: Use `--restore=DIR` to restore from a backup directory (e.g. `./installer.sh --restore=~/.cache/gamelauncher/backups/20250124-120000`). Restores `sysctl.conf`, `fstab`, and related configs.
+
+### Verification (checksum)
+
+After building the standalone installer, `./build.sh` prints a SHA256 checksum and writes `installer-standalone.sha256`. To verify a downloaded standalone:
+
+```bash
+sha256sum -c installer-standalone.sha256
+```
 
 ## Usage
 
@@ -185,7 +223,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Toppzi/gamelauncher/main/ins
   ║   ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗                      ║
   ║   ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝                      ║
   ║                                                               ║
-  ║        GAME LAUNCHER INSTALLER v1.0                           ║
+  ║        GAME LAUNCHER INSTALLER v1.1                           ║
   ║                                                               ║
   ║                    Created by Toppzi                          ║
   ║                                                               ║
@@ -230,6 +268,17 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Toppzi/gamelauncher/main/ins
 - Use ProtonUp-Qt to install and manage Proton-GE versions
 
 ## Changelog
+
+### v1.1
+- **Dry-run** (`-n`, `--dry-run`): preview actions without making changes
+- **Logging** (`--log`, `--log=FILE`): log actions to a file
+- **Verbose** (`-v`, `--verbose`): extra diagnostic output
+- **Config file** (`--config=FILE`): load selections from key=0|1 config
+- **Non-interactive** (`--non-interactive`, `--yes`): run without prompts; use with `--config` or `--uninstall`
+- **Revert optimizations**: uninstall now reverts CPU governor, swappiness, I/O scheduler, vm.max_map_count, file limits
+- **Backup & restore**: backups in `~/.cache/gamelauncher/backups/<timestamp>`; `--restore=DIR` to restore
+- **Checksum**: `build.sh` outputs SHA256; `installer-standalone.sha256` for verification
+- **CI**: GitHub Actions workflow for ShellCheck, build, and smoke tests
 
 ### v1.0
 - Added `--help` and `--version` command line flags
@@ -280,5 +329,5 @@ Pull requests are welcome! Feel free to submit issues or feature requests.
 If you encounter any issues:
 1. Make sure you're running the latest version
 2. Check that your distribution is supported
-3. Run with `bash -x installer.sh` for debug output
+3. Run with `--verbose` or `bash -x installer.sh` for debug output
 4. Open an issue on GitHub with your distro and error message

@@ -10,8 +10,17 @@
 #
 # ============================================================================
 
-VERSION="1.0"
+VERSION="1.1"
 SCRIPT_NAME="Linux Game Launcher Installer"
+
+# Flags (set by parse_args)
+DRY_RUN=0
+VERBOSE=0
+LOG_FILE=""
+CONFIG_FILE=""
+NON_INTERACTIVE=0
+DO_UNINSTALL=0
+RESTORE_BACKUP=""
 
 # Show version
 show_version() {
@@ -30,8 +39,16 @@ show_help() {
     echo "Installs game launchers, graphics drivers, and gaming tools."
     echo ""
     echo "Options:"
-    echo "  -h, --help      Show this help message and exit"
-    echo "  -v, --version   Show version information and exit"
+    echo "  -h, --help           Show this help message and exit"
+    echo "  -V, --version        Show version information and exit"
+    echo "  -n, --dry-run        Show what would be done without making changes"
+    echo "  -v, --verbose        Verbose output"
+    echo "  --log[=FILE]         Log actions to FILE (default: ~/gamelauncher-<date>.log)"
+    echo "  --config=FILE        Load selections from config file"
+    echo "  --non-interactive    Run without prompts (use with --config; implies install)"
+    echo "  --yes                Alias for --non-interactive"
+    echo "  --uninstall          With --non-interactive, uninstall selected items"
+    echo "  --restore=DIR        Restore from backup directory (see Backup/Restore in README)"
     echo ""
     echo "Supported Distributions:"
     echo "  Arch:     Arch Linux, Manjaro, EndeavourOS, Garuda, CachyOS"
@@ -50,12 +67,14 @@ show_help() {
     echo "Run without arguments to start the interactive installer."
     echo ""
     echo "Examples:"
-    echo "  ./$(basename "$0")           Start interactive installer"
-    echo "  ./$(basename "$0") --help    Show this help"
-    echo "  ./$(basename "$0") --version Show version"
+    echo "  ./$(basename "$0")                   Start interactive installer"
+    echo "  ./$(basename "$0") --help            Show this help"
+    echo "  ./$(basename "$0") -V                Show version"
+    echo "  ./$(basename "$0") -n                Dry-run (preview only)"
+    echo "  ./$(basename "$0") --config=cfg --non-interactive   Install from config"
     echo ""
     echo "Online usage:"
-    echo "  bash <(curl -fsSL https://raw.githubusercontent.com/Toppzi/gamelauncher/main/installer.sh)"
+    echo "  bash <(curl -fsSL https://raw.githubusercontent.com/Toppzi/gamelauncher/main/installer-standalone.sh)"
     echo ""
 }
 
@@ -67,9 +86,42 @@ parse_args() {
                 show_help
                 exit 0
                 ;;
-            -v|--version)
+            -V|--version)
                 show_version
                 exit 0
+                ;;
+            -n|--dry-run)
+                DRY_RUN=1
+                ;;
+            -v|--verbose)
+                VERBOSE=1
+                ;;
+            --log)
+                if [[ -n "${2:-}" && "${2:0:1}" != "-" ]]; then
+                    LOG_FILE="$2"
+                    shift
+                else
+                    LOG_FILE="$HOME/gamelauncher-$(date +%Y%m%d-%H%M%S).log"
+                fi
+                ;;
+            --log=*)
+                LOG_FILE="${1#--log=}"
+                ;;
+            --config=*)
+                CONFIG_FILE="${1#--config=}"
+                ;;
+            --config)
+                CONFIG_FILE="${2:-}"
+                [[ -n "$CONFIG_FILE" ]] && shift
+                ;;
+            --non-interactive|--yes)
+                NON_INTERACTIVE=1
+                ;;
+            --uninstall)
+                DO_UNINSTALL=1
+                ;;
+            --restore=*)
+                RESTORE_BACKUP="${1#--restore=}"
                 ;;
             *)
                 echo "Unknown option: $1"
@@ -144,6 +196,8 @@ source "$SCRIPT_DIR/lib/optimization.sh"
 source "$SCRIPT_DIR/lib/install.sh"
 # shellcheck source=lib/menus.sh
 source "$SCRIPT_DIR/lib/menus.sh"
+# shellcheck source=lib/config.sh
+source "$SCRIPT_DIR/lib/config.sh"
 # shellcheck source=lib/main.sh
 source "$SCRIPT_DIR/lib/main.sh"
 
