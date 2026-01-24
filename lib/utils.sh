@@ -40,6 +40,7 @@ print_error() {
 
 print_verbose() {
     [[ "${VERBOSE:-0}" -eq 1 ]] && echo -e "${BLUE}[v]${NC} $1"
+    return 0
 }
 
 log_msg() {

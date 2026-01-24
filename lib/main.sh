@@ -79,8 +79,8 @@ main() {
     fi
     
     print_banner
-    [[ -n "${LOG_FILE:-}" ]] && log_msg "Started; log=$LOG_FILE"
-    [[ "${DRY_RUN:-0}" -eq 1 ]] && print_warning "Dry-run mode: no changes will be made."
+    if [[ -n "${LOG_FILE:-}" ]]; then log_msg "Started; log=$LOG_FILE"; fi
+    if [[ "${DRY_RUN:-0}" -eq 1 ]]; then print_warning "Dry-run mode: no changes will be made."; fi
     
     print_info "Detecting system..."
     print_verbose "Detecting distro..."
@@ -90,7 +90,7 @@ main() {
     detect_kernel
     detect_gpu_driver
     check_dependencies
-    [[ -n "${LOG_FILE:-}" ]] && log_msg "Detected: distro=$DISTRO family=$DISTRO_FAMILY gpu=$GPU_VENDOR"
+    if [[ -n "${LOG_FILE:-}" ]]; then log_msg "Detected: distro=$DISTRO family=$DISTRO_FAMILY gpu=$GPU_VENDOR"; fi
     
     show_system_info
     press_enter
